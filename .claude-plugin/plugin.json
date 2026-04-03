@@ -1,0 +1,8 @@
+{
+  "name": "intelli",
+  "description": "Intelli platform integration analysis — evaluates third-party platform APIs for Shulex Intelli compatibility",
+  "version": "1.0.0",
+  "author": {
+    "name": "Shulex"
+  }
+}
