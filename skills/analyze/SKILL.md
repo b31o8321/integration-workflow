@@ -1,6 +1,7 @@
 ---
 name: analyze
 description: Full Intelli platform analysis flow. Orchestrates check-api → map-arch → report with user checkpoints between each phase. Use this for any platform feasibility evaluation. Optionally hands off to superpowers:brainstorming when implementation is desired.
+version: 1.0.0
 ---
 
 # intelli:analyze — Platform Analysis Orchestrator
