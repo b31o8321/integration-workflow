@@ -86,6 +86,42 @@ else
   echo "⚠️  settings.json not found at $SETTINGS_JSON — skipping settings update"
 fi
 
+# 5. Register SessionStart hook in settings.json
+HOOK_CMD="bash ${REPO_DIR}/hooks/session-start"
+if python3 -c "
+import json, sys
+d = json.load(open('$SETTINGS_JSON'))
+hooks = d.get('hooks', {}).get('SessionStart', [])
+for entry in hooks:
+    for h in entry.get('hooks', []):
+        if '$HOOK_CMD' in h.get('command', ''):
+            sys.exit(0)
+sys.exit(1)
+" 2>/dev/null; then
+  echo "✓ SessionStart hook already registered in settings.json"
+else
+  python3 - <<PYEOF
+import json
+
+path = "$SETTINGS_JSON"
+with open(path) as f:
+    data = json.load(f)
+
+if "hooks" not in data:
+    data["hooks"] = {}
+if "SessionStart" not in data["hooks"]:
+    data["hooks"]["SessionStart"] = []
+
+data["hooks"]["SessionStart"].append({
+    "hooks": [{"command": "$HOOK_CMD", "type": "command"}]
+})
+
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+print("✓ SessionStart hook registered in settings.json")
+PYEOF
+fi
+
 echo ""
 echo "✓ Installation complete. Restart Claude Code to activate."
 echo ""
