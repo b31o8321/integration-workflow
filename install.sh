@@ -1,14 +1,19 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 SKILLS_DIR="$HOME/.claude/skills"
 PLUGIN_DIR="$(cd "$(dirname "$0")" && pwd)/skills/intelli"
 
 mkdir -p "$SKILLS_DIR"
 
-if [ -L "$SKILLS_DIR/intelli" ]; then
-  echo "Removing existing symlink: $SKILLS_DIR/intelli"
-  rm "$SKILLS_DIR/intelli"
+if [ ! -d "$PLUGIN_DIR" ]; then
+  echo "Error: skills directory not found at $PLUGIN_DIR" >&2
+  exit 1
+fi
+
+if [ -L "$SKILLS_DIR/intelli" ] || [ -e "$SKILLS_DIR/intelli" ]; then
+  echo "Removing existing entry: $SKILLS_DIR/intelli"
+  rm -rf "$SKILLS_DIR/intelli"
 fi
 
 ln -s "$PLUGIN_DIR" "$SKILLS_DIR/intelli"
