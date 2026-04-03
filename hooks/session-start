@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Read skill list from skills/intelli/
+SKILLS_LIST=""
+for skill_dir in "${PLUGIN_ROOT}/skills/intelli"/*/; do
+  skill_name=$(basename "$skill_dir")
+  if [ -f "${skill_dir}SKILL.md" ]; then
+    # Extract description from frontmatter
+    desc=$(awk '/^description:/{found=1; sub(/^description: *"/,""); sub(/"$/,""); print; exit} found && /^---/{exit}' "${skill_dir}SKILL.md" 2>/dev/null || echo "")
+    SKILLS_LIST="${SKILLS_LIST}\n- intelli:${skill_name} — ${desc}"
+  fi
+done
+
+escape_for_json() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
+context="<system-reminder>
+You have the following intelli skills available via the Skill tool:
+${SKILLS_LIST}
+
+Usage:
+- /intelli:analyze <platform name, URL, file path, or pasted API docs> — full analysis flow with checkpoints
+- /intelli:check-api — Phase 1 only: API capability matrix
+- /intelli:map-arch  — Phase 2 only: architecture mapping
+- /intelli:report    — Phase 3 only: feasibility report
+
+When the user asks to analyze a platform (e.g. \"分析一下 Freshdesk\", \"能接入 Zendesk 吗\"), use the Skill tool to invoke intelli:analyze.
+</system-reminder>"
+
+escaped=$(escape_for_json "$context")
+
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$escaped"
+else
+  printf '{\n  "additionalContext": "%s"\n}\n' "$escaped"
+fi
+
+exit 0

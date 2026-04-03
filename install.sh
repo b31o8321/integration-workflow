@@ -1,23 +1,93 @@
 #!/bin/bash
 set -euo pipefail
 
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILLS_DIR="$HOME/.claude/skills"
-PLUGIN_DIR="$(cd "$(dirname "$0")" && pwd)/skills/intelli"
+PLUGIN_DIR="${REPO_DIR}/skills/intelli"
+CLAUDE_DIR="$HOME/.claude"
+PLUGINS_JSON="${CLAUDE_DIR}/plugins/installed_plugins.json"
+SETTINGS_JSON="${CLAUDE_DIR}/settings.json"
+PLUGIN_KEY="intelli@local"
+INSTALL_PATH="${REPO_DIR}"
 
-mkdir -p "$SKILLS_DIR"
-
+# 1. Verify skills directory exists
 if [ ! -d "$PLUGIN_DIR" ]; then
   echo "Error: skills directory not found at $PLUGIN_DIR" >&2
   exit 1
 fi
 
+# 2. Symlink skills
+mkdir -p "$SKILLS_DIR"
 if [ -L "$SKILLS_DIR/intelli" ] || [ -e "$SKILLS_DIR/intelli" ]; then
   echo "Removing existing entry: $SKILLS_DIR/intelli"
   rm -rf "$SKILLS_DIR/intelli"
 fi
-
 ln -s "$PLUGIN_DIR" "$SKILLS_DIR/intelli"
-echo "✓ Installed: ~/.claude/skills/intelli → $PLUGIN_DIR"
+echo "✓ Skills symlinked: ~/.claude/skills/intelli → $PLUGIN_DIR"
+
+# 3. Register plugin in installed_plugins.json
+if [ -f "$PLUGINS_JSON" ]; then
+  # Check if already registered
+  if python3 -c "import json,sys; d=json.load(open('$PLUGINS_JSON')); sys.exit(0 if '$PLUGIN_KEY' in d.get('plugins',{}) else 1)" 2>/dev/null; then
+    echo "✓ Plugin already registered in installed_plugins.json"
+  else
+    python3 - <<PYEOF
+import json, datetime
+
+path = "$PLUGINS_JSON"
+with open(path) as f:
+    data = json.load(f)
+
+if "plugins" not in data:
+    data["plugins"] = {}
+
+data["plugins"]["$PLUGIN_KEY"] = [
+    {
+        "scope": "user",
+        "installPath": "$INSTALL_PATH",
+        "version": "1.0.0",
+        "installedAt": datetime.datetime.utcnow().isoformat() + "Z",
+        "lastUpdated": datetime.datetime.utcnow().isoformat() + "Z"
+    }
+]
+
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+print("✓ Plugin registered in installed_plugins.json")
+PYEOF
+  fi
+else
+  echo "⚠️  installed_plugins.json not found at $PLUGINS_JSON — skipping plugin registration"
+fi
+
+# 4. Enable plugin in settings.json
+if [ -f "$SETTINGS_JSON" ]; then
+  if python3 -c "import json,sys; d=json.load(open('$SETTINGS_JSON')); sys.exit(0 if d.get('enabledPlugins',{}).get('$PLUGIN_KEY') else 1)" 2>/dev/null; then
+    echo "✓ Plugin already enabled in settings.json"
+  else
+    python3 - <<PYEOF
+import json
+
+path = "$SETTINGS_JSON"
+with open(path) as f:
+    data = json.load(f)
+
+if "enabledPlugins" not in data:
+    data["enabledPlugins"] = {}
+
+data["enabledPlugins"]["$PLUGIN_KEY"] = True
+
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+print("✓ Plugin enabled in settings.json")
+PYEOF
+  fi
+else
+  echo "⚠️  settings.json not found at $SETTINGS_JSON — skipping settings update"
+fi
+
+echo ""
+echo "✓ Installation complete. Restart Claude Code to activate."
 echo ""
 echo "Available skills:"
 echo "  /intelli:analyze    — full analysis flow with checkpoints"
