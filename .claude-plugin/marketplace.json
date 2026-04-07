@@ -1,14 +1,19 @@
 {
   "name": "intelli",
-  "description": "Intelli platform integration analysis skills for Shulex",
-  "author": {
-    "name": "b31o8321"
+  "owner": {
+    "name": "b31o8321",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Intelli platform integration analysis skills for Shulex",
+    "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "intelli",
-      "path": ".",
-      "description": "Evaluate third-party platform APIs for Shulex Intelli compatibility"
+      "source": "./",
+      "description": "Evaluate third-party platform APIs for Shulex Intelli compatibility — Ticket AI Reply, Livechat, and Data Sync dimensions.",
+      "category": "productivity"
     }
   ]
 }
