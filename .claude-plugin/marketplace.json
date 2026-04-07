@@ -1,0 +1,14 @@
+{
+  "name": "intelli",
+  "description": "Intelli platform integration analysis skills for Shulex",
+  "author": {
+    "name": "b31o8321"
+  },
+  "plugins": [
+    {
+      "name": "intelli",
+      "path": ".",
+      "description": "Evaluate third-party platform APIs for Shulex Intelli compatibility"
+    }
+  ]
+}
