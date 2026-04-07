@@ -134,44 +134,97 @@ From the API docs already analyzed, determine the platform's auth scheme:
 
 Tell the user which auth type was detected and confirm the credential format before proceeding.
 
-### Step 2: Select Validation Endpoints
+### Step 2: Classify Capabilities by Validation Type
 
-Choose the safest, most representative **read-only** endpoint for each capability.
-Prefer list endpoints with small page size (`limit=1` / `per_page=1`) to minimize side effects.
-**Never call write endpoints** (POST reply, apply tags, etc.) — only validate read/existence.
+Classify each capability into one of three types:
 
-Priority endpoints to validate:
+| Type | Handling |
+|------|---------|
+| **Read** | Execute directly with Bash/curl; if range params required, ask user first |
+| **Write** | Generate curl command only — do NOT execute; user adjusts and runs manually |
+| **Webhook** | Collect official setup docs; present for user to confirm manually |
 
-| Capability | Suggested endpoint |
-|------------|-------------------|
-| Fetch ticket messages | GET /tickets (or /conversations) with limit=1 |
-| Read tags | GET /tags or GET /labels |
-| Order API | GET /orders with limit=1 |
-| Product API | GET /products with limit=1 |
-| Logistics API | GET /shipments with limit=1 |
+Typical classification:
 
-Skip validation for: Webhook push (can't test passively), Send reply, Apply tags (write ops), WebSocket (needs persistent connection).
+| Capability | Type |
+|------------|------|
+| Fetch ticket messages | Read |
+| Read tags/labels | Read |
+| Order / Product / Logistics API | Read |
+| Rate limit headers | Read (check response headers) |
+| Send reply | Write |
+| Apply tags | Write |
+| Webhook push | Webhook |
+| WebSocket inbound | Webhook |
+| Session lifecycle events | Webhook |
 
-### Step 3: Execute Validation Calls
+### Step 3: Handle Each Type
 
-Use the Bash tool to run curl for each selected endpoint. Template:
+#### Read Operations
 
-```bash
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "Authorization: Bearer {token}" \
-  "{base_url}/{endpoint}"
+Before calling, check if the endpoint requires range/filter parameters (e.g. `start_time`, `shop_id`, `order_status`).
+If required params are not obvious from docs, ask the user:
+
+```
+GET /orders 需要以下参数，请提供：
+- shop_id（必填）：
+- start_time（选填，建议填一个近期日期）：
 ```
 
-Interpret HTTP status:
-- `200` / `201` — ✓ Verified: endpoint exists and credentials work
-- `401` / `403` — ✗ Auth failed: endpoint exists but credentials rejected
-- `404` — ✗ Not found: endpoint URL might be wrong (don't mark capability as unavailable)
-- `429` — ✓ Exists (rate limited): endpoint works, just throttled
-- `5xx` — ⚠️ Server error: inconclusive
+Then execute with Bash tool:
+
+```bash
+curl -s -w "\nHTTP_STATUS:%{http_code}" \
+  -H "Authorization: Bearer {token}" \
+  "{base_url}/{endpoint}?limit=1{&user_params}"
+```
+
+Show the user: HTTP status + truncated response body (first 300 chars).
+
+Interpret status:
+- `200` / `201` — ✓ Verified
+- `401` / `403` — ✗ Auth failed → stop all further calls, inform user
+- `404` — ✗ Endpoint not found (don't change capability status)
+- `429` — ✓ Exists, rate limited
+- `5xx` — ⚠️ Inconclusive
+
+#### Write Operations
+
+Do NOT execute. Generate a curl command and present it clearly:
+
+```
+✏️  Send reply — 请手动执行以下命令验证：
+
+curl -X POST "{base_url}/tickets/{ticket_id}/replies" \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"body": "test reply from intelli validation"}'
+
+⚠️  请将 {ticket_id} 替换为一个测试工单 ID，确认后告知结果。
+```
+
+Wait for the user to report the result before marking as verified.
+
+#### Webhook Operations
+
+Collect the relevant section from the API docs and present it:
+
+```
+🔗  Webhook push — 需人工确认配置：
+
+文档摘录：
+{paste the relevant webhook setup section from docs}
+
+请确认：
+1. 你的环境是否可以注册 Webhook URL？
+2. 以上文档描述是否符合预期？
+
+确认后将标记为 ✓ Verified。
+```
 
 ### Step 4: Output Validation Results
 
-Append a validation section to the capability matrix:
+After all checks, append to the capability matrix:
 
 ```
 LIVE VALIDATION RESULTS
@@ -179,18 +232,22 @@ LIVE VALIDATION RESULTS
 Auth method: {detected auth type}
 Base URL:    {api base url}
 
-✓ Fetch ticket messages — HTTP 200 (GET /tickets?limit=1)
-✓ Read tags             — HTTP 200 (GET /tags)
-✓ Order API             — HTTP 200 (GET /orders?limit=1)
-✗ Product API           — HTTP 404 (GET /products — endpoint not found)
-✓ Logistics API         — HTTP 200 (GET /shipments?limit=1)
-— Send reply            — skipped (write operation)
-— Webhook push          — skipped (cannot test passively)
+READ (auto-executed)
+✓ Fetch ticket messages — HTTP 200 · {"id":123,"subject":"..."...} (truncated)
+✓ Read tags             — HTTP 200 · [{"id":1,"name":"urgent"}...] (truncated)
+✓ Order API             — HTTP 200 · {"orders":[{"id":"O-001"...}]} (truncated)
+✗ Product API           — HTTP 404 · endpoint not found
 
-验证结论: 凭证有效，核心读取接口均可访问。
+WRITE (curl generated, awaiting manual verification)
+✓ Send reply            — 用户确认: HTTP 201 成功
+? Apply tags            — 待用户验证
+
+WEBHOOK (awaiting manual confirmation)
+✓ Webhook push          — 用户确认: 文档描述符合预期，可配置
+— WebSocket             — 用户确认: 平台不支持 WebSocket
+
+验证结论: {overall summary}
 ```
-
-If any `401`/`403` are returned: stop and inform the user the credentials are invalid, do not continue calling other endpoints.
 
 ## Standalone vs Orchestrated
 
