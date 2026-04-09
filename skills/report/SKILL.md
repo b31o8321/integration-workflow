@@ -32,10 +32,23 @@ Generate the following report, filling in all sections with real analysis:
 
 ---
 
+## ⚠️ 授权前置条件
+{Only include this block if authorization model is MARKETPLACE_APP or CONDITIONAL. If SELF_AUTH, omit entirely.}
+
+> 🚨 **本平台需通过官方 Marketplace App 审核才能对客户进行授权。**
+>
+> - **申请流程**: {描述申请步骤}
+> - **预计审核周期**: {X 周 / 不确定}
+> - **受限能力**: {审核前无法访问的 API 列表}
+> - **建议**: 在启动研发前，先行提交申请，避免研发完成后因审核延误上线。
+
+---
+
 ## 一、结论（PM / 交付用）
 
 | 功能         | 结论            | 说明                                        |
 |--------------|-----------------|---------------------------------------------|
+| 授权模式     | {✅ 客户自助授权 / 🚨 需申请审核 / ⚠️ 部分受限} | {one sentence} |
 | 工单AI回复   | {✅/⚠️/❌} {label} | {one sentence — what works or what's missing} |
 | Livechat对接 | {✅/⚠️/❌} {label} | {one sentence}                              |
 | 数据同步     | {✅/⚠️/❌} {label} | {one sentence}                              |
@@ -49,6 +62,21 @@ Labels: 可行 / 部分可行（需适配）/ 不可行
 ---
 
 ## 二、技术差距分析（研发用）
+
+### 授权与接入模式
+
+**授权类型：** {API Key / OAuth2 / JWT / Basic Auth}
+**授权模式：** {✅ 客户自助授权 / 🚨 需 Marketplace App 审核 / ⚠️ 部分受限}
+
+{If MARKETPLACE_APP or CONDITIONAL:}
+**申请要求：**
+- 申请入口: {URL}
+- 申请材料: {描述}
+- 审核周期: {预估}
+- 受限 API: {列表}
+- **风险提示**: 建议将申请列为 P0 前置任务，优先于研发启动。
+
+---
 
 ### 工单AI回复
 
@@ -151,6 +179,7 @@ Announce the save path after writing: "报告已保存至 `docs/platform-analysi
 报告包含三个部分：
 
 **一、链路总览（PM / 交付用）**
+- {If MARKETPLACE_APP:} 🚨 **授权前置条件**：需完成 Marketplace App 申请审核
 - Step 汇总表：Step 编号 / 描述 / 平台 / 结论 / 关键说明
 - 整体结论（可行 / 部分可行 / 存在阻断）
 - 主要前置条件列表

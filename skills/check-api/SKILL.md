@@ -52,6 +52,36 @@ assign a status to each capability:
 | Session lifecycle events | Required | Open, close, transfer events |
 | Unique message ID | Required | Deduplication key per message |
 
+### Feature 0: 授权模式（Authorization Model）
+
+在开始三维度分析之前，先评估授权模式。这直接影响方案能否落地。
+
+重点区分以下两类：
+
+| 类型 | 标志 | 说明 |
+|------|------|------|
+| **客户自助授权** | ✅ SELF_AUTH | 客户可以自行生成 API Key / OAuth Token，无需平台审核 |
+| **需申请 Marketplace App** | 🚨 MARKETPLACE_APP | 需向平台官方提交开发者申请，经审核后才能对客户进行授权 |
+
+Look for these signals that indicate MARKETPLACE_APP is required:
+- "Apply to be a partner / ISV / developer"
+- "Your app must be approved / reviewed / listed"
+- "Submit app for review"
+- "Public app" / "App Store listing" required for OAuth
+- Restricted API access by approval (e.g., Amazon SP-API Reports, Meta Graph API advanced permissions)
+- "Contact us to enable" / "Available upon request"
+
+Look for these signals that indicate SELF_AUTH (customer can authorize directly):
+- "Generate API Key in your account settings"
+- "Create OAuth app with your own credentials"
+- "Private app" / "Custom app" mode available
+- Customer provides subdomain + API key / token
+
+Assign one of:
+- ✅ **SELF_AUTH** — 客户直接授权，无审核流程，不影响方案实施
+- 🚨 **MARKETPLACE_APP** — 需官方申请/审核，**方案实施前置条件**，需在报告中重点标注
+- ⚠️ **CONDITIONAL** — 部分 API 需审核（注明哪些能力受限）
+
 ### Feature 3: 数据同步 (Order / Product / Logistics Sync)
 
 | Capability | Required? | Look for |
@@ -74,6 +104,17 @@ Source: {URL / file path / description}
 
 CAPABILITY MATRIX
 ═══════════════════════════════════════════════════════════════
+
+AUTHORIZATION MODEL
+─────────────────────────────────────────
+{✅ SELF_AUTH / 🚨 MARKETPLACE_APP / ⚠️ CONDITIONAL}
+
+授权方式: {API Key / OAuth2 / JWT / Basic Auth}
+凭证来源: {e.g. "客户在平台设置页自行生成 API Key" / "需向平台提交开发者申请，审核通过后发放 OAuth Client ID/Secret"}
+{If MARKETPLACE_APP or CONDITIONAL:}
+⚠️  申请要求: {描述申请流程，如 "需注册 Partner 账号，提交 App 审核，通常需 X 周"}
+⚠️  受限能力: {哪些 API 需要审核才能访问，哪些可以直接使用}
+⚠️  实施影响: {对方案排期的影响，如 "需提前 N 周开始申请，审核通过前无法集成测试"}
 
 FEATURE 1: 工单 AI 回复 (Ticket AI Reply)
 ─────────────────────────────────────────
@@ -102,9 +143,12 @@ FEATURE 3: 数据同步
 
 SUMMARY
 ═══════════════════════════════════════════════════════════════
+授权模式:    {✅ SELF_AUTH / 🚨 MARKETPLACE_APP（需申请审核） / ⚠️ CONDITIONAL}
 工单 AI 回复:  {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
 Livechat 对接: {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
 数据同步:      {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
+{If MARKETPLACE_APP:}
+🚨 注意: 接入前需完成 Marketplace App 申请，建议尽早启动审核流程。
 ```
 
 ## Optional: Live API Validation
