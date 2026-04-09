@@ -26,28 +26,42 @@ cd integration-workflow
 
 ## 使用方式
 
-### 完整分析流程（推荐）
+### 入口命令
 
 ```
-/intelli:analyze <平台名称 / API 文档 URL / 本地文件路径 / 粘贴的 API 描述>
+/intelli:analyze <平台名称 / API 文档 URL / 本地文件路径>
 ```
 
-分阶段依次执行，每阶段结束后可以选择停止：
+Phase 1 收集业务背景后，选择分析模式：
 
+**模式一：标准能力评估**
 ```
-Phase 1: 业务场景收集    →  明确目标功能方向
-Phase 2: API 能力检查    →  能力矩阵
+Phase 1: 业务场景收集 + 模式选择
+Phase 2: API 能力检查    →  三维度能力矩阵
 Phase 3: 架构映射        →  接口差距分析
 Phase 4: 偏差评估        →  直接套用 / 简单改造 / 新链路设计
 Phase 5: 可行性报告      →  研发 checklist + 工作量评估
 ```
+适合：快速判断平台是否满足 Intelli 标准接入要求（工单/Livechat/数据同步）
+
+**模式二：业务链路验证**
+```
+Phase 1:    业务场景收集 + 模式选择
+Phase A:    AI 推导技术链路  →  用户确认/修正
+Phase B:    逐段 API 验证    →  API端点 + 文档链接 + 系统能力对照
+Phase C:    链路可行性总结   →  有条件/需开发 附三方资料
+报告生成:   链路可行性报告   →  PM总览 + 研发详情 + 实现checklist
+```
+适合：有明确业务场景，需要知道端到端能否跑通
 
 ### 单独执行各阶段
 
 ```
-/intelli:check-api   — 仅输出能力矩阵（适合快速判断）
-/intelli:map-arch    — 仅做架构映射（需已有能力矩阵）
-/intelli:report      — 仅生成报告（需已有架构映射）
+/intelli:flow-analyze  — 单独运行业务链路验证
+/intelli:check-api     — 仅输出能力矩阵（标准模式快速判断）
+/intelli:map-arch      — 仅做架构映射（需已有能力矩阵）
+/intelli:report        — 仅生成报告
+/intelli:update-kb     — 更新系统能力知识库（需 /add-dir 代码库）
 ```
 
 ## 各角色适用场景
@@ -87,7 +101,21 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}.md
 
 | Skill | 说明 |
 |-------|------|
-| `intelli:analyze` | 完整三阶段分析编排器 |
+| `intelli:analyze` | 平台分析入口（标准模式 + 链路模式） |
+| `intelli:flow-analyze` | 业务链路验证（Phase A/B/C + 链路报告） |
 | `intelli:check-api` | API 能力矩阵分析 |
 | `intelli:map-arch` | 映射到 Intelli 接口规范 |
-| `intelli:report` | 生成双层可行性报告 |
+| `intelli:report` | 生成双层可行性报告 / 链路模式报告 |
+| `intelli:update-kb` | 分析代码库，更新系统能力知识库 |
+
+## 版本管理（维护者必读）
+
+修改任何 `SKILL.md` 或 `knowledge-base/` 文件后，**必须** bump `package.json` 版本号：
+
+| 变更类型 | 版本号 |
+|---------|--------|
+| 知识库更新、措辞修正 | x.x.N（patch） |
+| 新增功能、流程调整 | x.N.0（minor） |
+| 架构重构 | N.0.0（major） |
+
+版本号不 bump 则 `/reload-plugins` 不会重新拉取，用户拿到的仍是旧版本。

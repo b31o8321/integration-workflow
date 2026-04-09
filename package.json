@@ -1,5 +1,5 @@
 {
     "name": "intelli",
-    "version": "1.2.0",
-    "description": "Intelli platform integration analysis — evaluates third-party platform APIs for Shulex Intelli compatibility"
+    "version": "2.0.0",
+    "description": "Intelli platform integration analysis — dual-mode: standard capability matrix or business flow validation with API-level detail"
 }
