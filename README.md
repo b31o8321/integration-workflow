@@ -32,12 +32,14 @@ cd integration-workflow
 /intelli:analyze <平台名称 / API 文档 URL / 本地文件路径 / 粘贴的 API 描述>
 ```
 
-分三个阶段依次执行，每阶段结束后可以选择停止：
+分阶段依次执行，每阶段结束后可以选择停止：
 
 ```
-Phase 1: API 能力检查    →  能力矩阵
-Phase 2: 架构映射        →  接口差距分析
-Phase 3: 可行性报告      →  研发 checklist + 工作量评估
+Phase 1: 业务场景收集    →  明确目标功能方向
+Phase 2: API 能力检查    →  能力矩阵
+Phase 3: 架构映射        →  接口差距分析
+Phase 4: 偏差评估        →  直接套用 / 简单改造 / 新链路设计
+Phase 5: 可行性报告      →  研发 checklist + 工作量评估
 ```
 
 ### 单独执行各阶段
@@ -52,8 +54,8 @@ Phase 3: 可行性报告      →  研发 checklist + 工作量评估
 
 | 角色 | 推荐用法 | 获得产出 |
 |------|---------|---------|
-| PM / 交付 | `/intelli:analyze` 在 Phase 1 停止 | 能力矩阵，快速判断可行性 |
-| 技术负责人 | `/intelli:analyze` 在 Phase 2 停止 | 差距分析 + 可行性结论 |
+| PM / 交付 | `/intelli:analyze` 在 Phase 2 停止 | 能力矩阵，快速判断可行性 |
+| 技术负责人 | `/intelli:analyze` 在 Phase 4 停止 | 差距分析 + 偏差评估（改造量） |
 | 研发团队 | `/intelli:analyze` 完整执行 | Markdown 报告 + 接入 checklist |
 
 ## 输入格式

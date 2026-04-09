@@ -19,7 +19,7 @@ into Shulex Intelli. Input can be a platform name, URL, file path, or pasted API
 
 ## Flow
 
-### Phase 0: 业务场景收集
+### Phase 1: 业务场景收集
 
 **在任何技术分析开始之前**，先了解业务背景：
 
@@ -32,8 +32,8 @@ into Shulex Intelli. Input can be a platform name, URL, file path, or pasted API
 ```
 
 Record the answers. This context will:
-- Focus Phase 1 analysis on the relevant feature dimensions
-- Inform the feasibility and deviation assessment in Phases 2 and 2.5
+- Focus Phase 2 analysis on the relevant feature dimensions
+- Inform the feasibility and deviation assessment in Phases 3 and 4
 
 ---
 
@@ -44,11 +44,11 @@ Before starting, confirm what the user wants to analyze if not clear:
 - If only a platform name was given (e.g. "分析一下 Freshdesk"): acknowledge and proceed —
   use WebSearch/WebFetch to find their public API docs
 
-Announce: "开始分析 {Platform Name}，分为三个阶段，每个阶段结束后可以选择停止。"
+Announce: "开始分析 {Platform Name}，分为五个阶段，每个阶段结束后可以选择停止。"
 
 ---
 
-### Phase 1: API Capability Check
+### Phase 2: API Capability Check
 
 Invoke the `intelli:check-api` skill with the platform information.
 
@@ -61,18 +61,18 @@ After the capability matrix is displayed:
 
 是否继续进行架构映射分析？（将平台能力映射到 Intelli 的接口规范）
 
-→ 继续：进入第二阶段
+→ 继续：进入第三阶段
 → 停止：到此为止（适合产品/交付快速判断）
 ```
 
 If user says stop: thank them and end. The matrix is already displayed.
-If user says continue: proceed to Phase 2.
+If user says continue: proceed to Phase 3.
 
 ---
 
-### Phase 2: Architecture Mapping
+### Phase 3: Architecture Mapping
 
-Invoke the `intelli:map-arch` skill with the capability matrix from Phase 1.
+Invoke the `intelli:map-arch` skill with the capability matrix from Phase 2.
 
 After the architecture mapping is displayed:
 
@@ -81,20 +81,20 @@ After the architecture mapping is displayed:
 ```
 架构映射完成。
 
-是否继续生成完整可行性报告？（包含研发 checklist 和工作量评估）
+是否继续进行偏差评估？（评估与现有 shulex_intelli 项目的改造量）
 
-→ 继续：生成报告
+→ 继续：进入第四阶段
 → 停止：到此为止
 ```
 
 If user says stop: end.
-If user says continue: proceed to Phase 2.5.
+If user says continue: proceed to Phase 4.
 
 ---
 
-### Phase 2.5: 偏差评估（与现有 shulex_intelli 项目）
+### Phase 4: 偏差评估（与现有 shulex_intelli 项目）
 
-Based on the feasibility verdict from Phase 2, assess how much the integration deviates from existing shulex_intelli capabilities. Evaluate under **each feasible feature dimension**:
+Based on the feasibility verdict from Phase 3, assess how much the integration deviates from existing shulex_intelli capabilities. Evaluate under **each feasible feature dimension**:
 
 | 评估结论 | 判断依据 |
 |----------|---------|
@@ -118,7 +118,7 @@ Livechat 对接: {直接套用 / 简单改造 / 新链路设计}
   → {说明}
 ```
 
-**CHECKPOINT B.5 — ask the user:**
+**CHECKPOINT C — ask the user:**
 
 ```
 偏差评估完成。
@@ -130,13 +130,13 @@ Livechat 对接: {直接套用 / 简单改造 / 新链路设计}
 ```
 
 If user says stop: end.
-If user says continue: proceed to Phase 3.
+If user says continue: proceed to Phase 5.
 
 ---
 
-### Phase 3: Report Generation
+### Phase 5: Report Generation
 
-Invoke the `intelli:report` skill with the architecture mapping from Phase 2.
+Invoke the `intelli:report` skill with the architecture mapping from Phase 3.
 
 After the report is saved, announce the file path.
 
@@ -182,11 +182,11 @@ If user says continue:
 ## Passing Context Between Phases
 
 When invoking sub-skills, pass the relevant output as context:
-- Phase 0 → all phases: carry business scenario and target outcome throughout
-- Phase 1 → Phase 2: include the full capability matrix text
-- Phase 2 → Phase 2.5: include the feasibility verdict from architecture mapping
-- Phase 2.5 → Phase 3: include the deviation assessment text
-- Phase 3 → brainstorming: include platform name, business scenario, feasible features, deviation assessment, report file path
+- Phase 1 → all phases: carry business scenario and target outcome throughout
+- Phase 2 → Phase 3: include the full capability matrix text
+- Phase 3 → Phase 4: include the feasibility verdict from architecture mapping
+- Phase 4 → Phase 5: include the deviation assessment text
+- Phase 5 → brainstorming: include platform name, business scenario, feasible features, deviation assessment, report file path
 
 ## Error Handling
 
