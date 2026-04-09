@@ -142,6 +142,32 @@ Example: `docs/platform-analysis/2026-04-03-freshdesk.md`
 
 Announce the save path after writing: "报告已保存至 `docs/platform-analysis/...`"
 
+## Chain Mode Report (链路模式报告)
+
+当被 `intelli:flow-analyze` 调用时，生成链路模式报告而非三维度报告。
+
+链路模式报告保存至：`docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}.md`
+
+报告包含三个部分：
+
+**一、链路总览（PM / 交付用）**
+- Step 汇总表：Step 编号 / 描述 / 平台 / 结论 / 关键说明
+- 整体结论（可行 / 部分可行 / 存在阻断）
+- 主要前置条件列表
+- 研发主要工作列表
+
+**二、逐段详细分析（研发用）**
+- 每个 Step 的完整验证结果
+- API / 配置表格，每行附文档链接
+- 我方能力对照（来自 knowledge-base）
+- ⚠️ 有条件：附确认方式 + 参考资料链接
+- ⚠️ 需开发：附工作量估算 + 研发参考资料链接
+- ❌ 阻断：附技术限制说明和文档证据
+
+**三、实现 Checklist（研发用）**
+- 仅列出可行、有条件、需开发的 Step
+- 每 Step 生成可执行的研发 checklist 条目
+
 ## Standalone vs Orchestrated
 
 - **Standalone** (`/intelli:report`): Generate and save the report, then stop.
