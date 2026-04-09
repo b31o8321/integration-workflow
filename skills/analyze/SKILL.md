@@ -1,6 +1,6 @@
 ---
 name: analyze
-description: Full Intelli platform analysis flow. Orchestrates check-api → map-arch → report with user checkpoints between each phase. Use this for any platform feasibility evaluation. Optionally hands off to superpowers:brainstorming when implementation is desired.
+description: Full Intelli platform analysis flow. Phase 1 collects business context and offers two modes: (1) standard three-dimension capability matrix, or (2) business flow validation with API-level detail and doc links. Use this as the single entry point for all platform evaluations.
 version: 1.0.0
 ---
 
@@ -34,6 +34,24 @@ into Shulex Intelli. Input can be a platform name, URL, file path, or pasted API
 Record the answers. This context will:
 - Focus Phase 2 analysis on the relevant feature dimensions
 - Inform the feasibility and deviation assessment in Phases 3 and 4
+
+收集完以上信息后，询问分析模式：
+
+```
+你希望进行哪种分析？
+
+→ 1. 标准能力评估
+      输出三维度能力矩阵（工单AI回复 / Livechat对接 / 数据同步）
+      适合：快速判断平台是否满足 Intelli 标准接入要求
+
+→ 2. 业务链路验证
+      基于你的业务目标，逐段验证技术链路可行性（API 级别，附文档链接）
+      适合：有明确业务场景，需要知道端到端能否跑通
+```
+
+- 选 1：继续现有 Phase 2–5 流程（三维度标准分析）
+- 选 2：调用 `intelli:flow-analyze` skill，传入业务背景和平台信息，
+         然后由 flow-analyze 完整执行链路验证流程
 
 ---
 
