@@ -1,6 +1,6 @@
 # shulex_gpt AI 能力
 
-> 最后更新: 2026-04-09（by intelli:update-kb）
+> 最后更新: 2026-04-10（by intelli:update-kb）
 
 ## 语音处理
 
@@ -31,6 +31,86 @@
 - 使用 SSE（Server-Sent Events）格式，与 OpenAI streaming 兼容
 - `AzureChatCompletionResponse.sseChunk()` 推送 delta（内容、tool calls、finish reason）
 - 支持多选项（`List<ChoicesItem>`），finishReason: `stop` / `length` / `tool_calls`
+
+---
+
+## VAPI 语音通话能力（NEW）
+
+### 通话类型（VapiCallType）
+
+| 类型 | 说明 |
+|------|------|
+| `webCall` | 网页语音通话 |
+| `inboundPhoneCall` | 电话拨入（呼入） |
+| `outboundPhoneCall` | 系统外呼 |
+
+### Webhook 接收
+
+- **入口：** `POST /api/webhooks/vapi/outbound`（`VapiWebhookController.receive()`）
+- **处理：** `VapiWebhookServiceImpl.handlePayload()`
+  - 事件类型：`status-update`（过程状态）、`end-of-call-report`（通话结束）
+  - 幂等键：`callId:eventType:status:endedReason`，持久化到 `vapi_webhook_event` 表
+  - 状态流：`queued → ringing → in-progress → ended`
+
+### 通话记录存储（S3）
+
+- 通话结束后 VAPI 将 JSONL 文件推送至 S3：`vapi/{callId}-xxx.jsonl.gz`
+- AWS SNS 触发 `SnsHookServiceImpl`，读取后转存为：`plg/vapi/call/{callId}.json`
+- 工具类 `VoiceS3Util` 提供：
+  - `getPreSignedUrl(key, expire)` — 生成临时访问 URL
+  - `getStr(key)` — 读取 JSON 文本内容
+  - `putWithContentType(bucket, key, body, contentType)` — 上传文件
+
+### 通话记录关键字段（VapiCallLog / VoiceTranscriptDTO）
+
+| 字段 | 说明 |
+|------|------|
+| `id` / `chatId` | VAPI 会话 ID |
+| `type` | 通话类型（见上表） |
+| `startedAt` / `endedAt` | 开始/结束时间 |
+| `callDuration` | 通话时长（秒） |
+| `transcript` | 对话文本记录 |
+| `recordingUrl` | 录音文件 URL |
+| `stereoRecordingUrl` | 立体声录音 URL |
+| `summary` | 通话摘要 |
+| `endedReason` | 结束原因（来自 VAPI） |
+| `customerNumber` | 客户号码 |
+| `transcriptUri` | S3 相对路径键 |
+
+### 通话结束原因（finalDisposition）
+
+| 值 | 说明 |
+|----|------|
+| `answered_completed` | 接通并正常结束 |
+| `no_answer` | 无人接听 |
+| `busy` | 被叫占线 |
+| `invalid_number` | 号码无效 |
+| `rejected` | 被叫拒接 |
+| `system_error` | 系统异常 |
+
+### 与 Intelli 的同步机制
+
+通话记录落库后，通过 **Kafka** 异步通知 Intelli 创建工单/Inbox：
+
+- **Topic：** `voice-transcripts-produced-topic`
+- **消息类：** `VoiceTranscriptProducedMessage`
+
+关键字段：
+
+| 字段 | 说明 |
+|------|------|
+| `tenantId` | 租户 ID |
+| `chatId` | VAPI 通话 ID |
+| `eventType` | `finish`（通话完成）/ `startRing`（开始振铃） |
+| `channel` | `plg`（plugin）/ `slg` |
+| `metadata.callType` | 通话类型 |
+| `metadata.callDuration` | 通话时长（秒） |
+| `metadata.callerNumber` | 来电号码 |
+| `metadata.phoneNumber` | 被呼号码 |
+| `metadata.batchNumber` | 外呼批次编号（外呼场景） |
+| `metadata.batchName` | 外呼批次名称（外呼场景） |
+
+Intelli 消费此消息后创建语音通话工单，通话记录（录音 URL、转录文本、时长）通过 S3 预签名 URL 可访问。
 
 ---
 
