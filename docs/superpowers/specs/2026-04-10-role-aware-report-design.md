@@ -125,6 +125,22 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}/
 
 ---
 
+### `README.md`
+
+需同步更新以下内容：
+
+1. **各角色适用场景** — 现有表格描述"在 Phase N 停止"，改为描述角色识别机制：分析开始时询问角色，对话和报告均按角色定制
+
+2. **报告输出位置** — 路径从单文件改为子目录四文件：
+   ```
+   docs/platform-analysis/YYYY-MM-DD-{platform-name}/
+     pm.md / arch.md / dev.md / spec.md
+   ```
+
+3. **Skills 列表** — `intelli:report` 描述从"生成双层可行性报告"改为"生成角色定制的四份报告文档"
+
+---
+
 ## 边界与约束
 
 - 角色只问一次，不重复询问
