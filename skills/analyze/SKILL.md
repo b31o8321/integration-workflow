@@ -21,6 +21,24 @@ into Shulex Intelli. Input can be a platform name, URL, file path, or pasted API
 
 ### Phase 1: 业务场景收集
 
+**首先，请确认你的角色**（影响整个分析过程的对话深度和最终报告展示）：
+
+```
+你是哪类受众？
+1. PM / 交付 — 关注结论、工作量、风险
+2. 产品 / 架构 — 关注系统边界、数据流、架构决策
+3. 研发 — 需要 API 细节、差距分析、接入 Checklist
+4. Claude（AI 开发）— 生成 writing-plans 输入的需求规格
+```
+
+记录角色标识：`pm` / `arch` / `dev` / `claude`。
+
+角色确定后，后续对话按以下方式调整：
+- `pm`：业务语言，不展示 API 细节，中间结果只给结论
+- `arch`：适量技术深度，强调边界和决策点，减少 API 端点细节
+- `dev`：完整技术细节，主动展示 API 端点和差距列表
+- `claude`：结构化输出，以表格和列表为主，避免叙述性段落
+
 **在任何技术分析开始之前**，先了解业务背景：
 
 ```
@@ -154,7 +172,10 @@ If user says continue: proceed to Phase 5.
 
 ### Phase 5: Report Generation
 
-Invoke the `intelli:report` skill with the architecture mapping from Phase 3.
+Invoke the `intelli:report` skill with:
+- The architecture mapping from Phase 3
+- The deviation assessment from Phase 4
+- The role identifier collected in Phase 1 (pass as context: "当前用户角色: {role}")
 
 After the report is saved, announce the file path.
 
