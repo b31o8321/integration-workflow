@@ -88,6 +88,8 @@ Generate all four documents. Fill every section with real analysis — no placeh
 
 ## 工作量汇总
 
+> 数据来源于研发版差距分析的工作量评估，此处汇总为非技术语言。
+
 | 功能模块 | 预计周期 |
 |---------|---------|
 | {module} | {X 天 / X 周} |
@@ -168,7 +170,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 **授权类型：** {API Key / OAuth2 / JWT / Basic Auth}
 **授权模式：** {✅ 客户自助授权 / 🚨 需 Marketplace App 审核 / ⚠️ 部分受限}
 
-{If MARKETPLACE_APP or CONDITIONAL:}
+{Only include if authorization model is MARKETPLACE_APP or CONDITIONAL:}
 **申请要求：**
 - 申请入口: {URL}
 - 申请材料: {描述}
@@ -215,7 +217,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 > 仅列出可行或部分可行的功能。
 
 ### 工单AI回复接入 Checklist
-{Only if ✅ or ⚠️}
+{Only include this section if 工单AI回复 is ✅ or ⚠️}
 
 - [ ] `ExternKeySourceEnum` 中注册新平台枚举
 - [ ] 创建 Maven 子模块 `intelli-ticket-{platform}`
@@ -237,7 +239,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - [ ] 配置 webhook URL: `/v2/webhook/{PLATFORM_ID}/{token}`
 
 ### Livechat接入 Checklist
-{Only if ✅ or ⚠️}
+{Only include this section if Livechat对接 is ✅ or ⚠️}
 
 - [ ] 实现 Livechat 消息接收通道（{WebSocket / Webhook / Polling}）
 - [ ] 实现 outbound 消息发送 — 接口: {endpoint}
@@ -246,7 +248,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - [ ] 接入 Kafka 消息管道
 
 ### 数据同步接入 Checklist
-{Only if ✅ or ⚠️}
+{Only include this section if 数据同步 is ✅ or ⚠️}
 
 - [ ] 实现 `ISyncService` 订单同步（{if order sync feasible}）
   - [ ] 增量拉取参数: {param name}
@@ -300,17 +302,16 @@ Generate all four documents. Fill every section with real analysis — no placeh
 
 ## 验收标准
 
+{For each feasible feature (✅ or ⚠️), include the corresponding line:}
 - **工单AI回复**: Webhook 能解析并创建工单；`sendReply()` 能成功发送回复；签名验证通过
 - **Livechat对接**: 消息能实时接收并路由到 AI；outbound 消息能送达；session 生命周期正确维护
 - **数据同步**: 增量同步无漏单；分页正确处理；rate limit 不触发 429
-
-{Remove lines for infeasible features.}
 
 ## 依赖
 
 - 第三方 API 文档: {URL}
 - 需要的凭据/权限: {list}
-{If MARKETPLACE_APP:}
+{Only include if authorization model is MARKETPLACE_APP or CONDITIONAL:}
 - 🚨 前置条件: 需完成 Marketplace App 申请，申请入口: {URL}
 ```
 
@@ -346,31 +347,143 @@ Role → file mapping:
 
 保存至：`docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}/`
 
-各文档内容调整：
+各文档使用以下模板：
 
 **`pm.md`（链路模式）**：
-- Step 汇总表（编号/描述/平台/结论/关键说明）
-- 整体结论
-- 主要前置条件列表
-- 研发主要工作列表
+
+```markdown
+# {业务目标} 链路可行性报告 — PM / 交付版
+
+> 分析日期: {YYYY-MM-DD}
+> 涉及平台: {平台列表}
+
+{If any step requires MARKETPLACE_APP approval:}
+## ⚠️ 授权前置条件
+> 🚨 需完成 Marketplace App 申请后方可实施，详见研发版 arch.md。
+
+## 链路总览
+
+| Step | 描述 | 平台/系统 | 结论 | 关键说明 |
+|------|------|----------|------|---------|
+| {N} | {描述} | {平台} | ✅/⚠️/❌ | {一句话} |
+
+**整体结论：** {可行 / 部分可行（N个前置条件，N项待开发）/ 存在阻断}
+
+## 主要前置条件
+- {🚨 申请审核项置顶}
+- {其他前置条件}
+
+## 研发主要工作
+- {需开发的 Step 任务}
+```
 
 **`arch.md`（链路模式）**：
-- 业务链路全貌（Step 序列 + 系统边界）
-- 跨平台数据流
-- 关键技术决策（每个需开发 Step 的方案选择）
-- 前置条件 + 依赖关系
+
+```markdown
+# {业务目标} 链路可行性报告 — 产品 / 架构版
+
+> 分析日期: {YYYY-MM-DD}
+> 涉及平台: {平台列表}
+
+## 业务链路全貌
+
+| Step | 系统 | 动作 | 依赖 |
+|------|------|------|------|
+| {N} | {系统} | {动作} | {依赖或"无"} |
+
+## 跨平台数据流
+
+{描述事件如何跨多个平台流转，每条一行}
+
+## 关键技术决策
+
+{For each "需开发" Step:}
+**Step N — {步骤名}**: {方案选择及原因}
+
+## 技术前置条件
+
+- {Condition 1}
+- {Condition 2}
+
+## 依赖关系
+
+- {Step A} 必须先于 {Step B} 实施，原因：{one sentence}
+```
 
 **`dev.md`（链路模式）**：
-- 每个 Step 的完整验证结果
-- API / 配置表格，每行附文档链接
-- 我方能力对照
-- 有条件/需开发/阻断的详细说明
+
+```markdown
+# {业务目标} 链路可行性报告 — 研发版
+
+> 分析日期: {YYYY-MM-DD}
+> 涉及平台: {平台列表}
+
+{For each Step (✅/⚠️/❌), paste the full verification output from Phase B:}
+
+## Step {N}: {步骤名称}
+
+**结论：** {✅/⚠️/❌} {可行 / 有条件 / 需开发 / 阻断}
+
+**API / 配置：**
+| 操作 | 类型 | 端点 / 入口 | 文档链接 |
+|------|------|------------|---------|
+| {操作} | {类型} | {端点} | [{标题}]({URL}) |
+
+**我方能力（knowledge-base）：**
+| 能力 | 状态 | 备注 |
+|------|------|------|
+| {能力} | ✅/⚠️/❌ | {备注} |
+
+{If ⚠️ 有条件:}
+**有条件说明：** {限制描述}
+**参考资料：** [{资料名}]({URL})
+
+{If ⚠️ 需开发:}
+**需开发说明：** {模块和工作量}
+**参考资料：** [{资料名}]({URL})
+
+{If ❌ 阻断:}
+**阻断原因：** {技术限制说明，引用文档证据}
+```
 
 **`spec.md`（链路模式）**：
-- 目标：业务链路一句话描述
-- 范围：仅包含 ✅/⚠️ 的 Step
-- 每个需开发 Step 的实现需求
-- 验收标准：每 Step 的完成定义
+
+```markdown
+# {业务目标} 链路实现需求规格 — Claude Spec
+
+> 分析日期: {YYYY-MM-DD}
+> 用途: 供 superpowers:writing-plans 生成实现计划
+
+## 目标
+
+{One sentence: what business flow to implement and which platforms are involved.}
+
+## 范围
+
+**包含（✅/⚠️ Step）：**
+- Step {N}: {描述}
+
+**不包含（❌ 阻断）：**
+- Step {N}: {描述} — 原因: {技术限制}
+
+## 各 Step 实现需求
+
+{For each ✅/⚠️ Step:}
+### Step {N}: {步骤名}
+
+**需实现：** {具体开发任务}
+**依赖接口/API：** {endpoint or SPI interface}
+**参考资料：** {URL}
+
+## 验收标准
+
+{For each ✅/⚠️ Step:}
+- **Step {N}**: {completion definition}
+
+## 依赖与前置条件
+
+- {External API docs, credentials, Marketplace App approval if needed}
+```
 
 对话展示规则与标准模式相同（角色对应文档完整展示，其余给路径）。
 
