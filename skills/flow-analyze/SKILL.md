@@ -20,6 +20,18 @@ version: 1.0.0
 
 若直接调用（`/intelli:flow-analyze`），先收集以上信息。
 
+**角色识别：**
+- 若来自 `intelli:analyze`（已有角色上下文）：直接使用，不再询问
+- 若直接调用：在收集业务背景后，询问角色：
+  ```
+  你是哪类受众？
+  1. PM / 交付
+  2. 产品 / 架构
+  3. 研发
+  4. Claude（AI 开发）
+  ```
+  记录角色标识：`pm` / `arch` / `dev` / `claude`
+
 ## Phase A: 技术链路推导
 
 基于业务目标和平台列表，将实现路径拆解为有序的 Step 序列。
@@ -142,50 +154,19 @@ API / 配置:
 
 ## Report Generation
 
-Phase C 完成后，生成 Markdown 报告：
+Phase C 完成后，调用 `intelli:report` skill，传入：
+- Phase B 的完整验证结果
+- Phase C 的链路可行性总结
+- 当前用户角色（`pm` / `arch` / `dev` / `claude`）
+- 模式标识：`chain-mode`（让 report skill 使用链路模式模板）
 
-**保存路径：** `docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}.md`
-
-**报告结构：**
-
-```markdown
-# {业务目标} 链路可行性报告
-
-> 分析日期: YYYY-MM-DD
-> 分析人: Claude (intelli:flow-analyze)
-> 涉及平台: {平台列表}
-
----
-
-## 一、链路总览（PM / 交付用）
-
-| Step | 描述 | 平台/系统 | 结论 | 说明 |
-|------|------|----------|------|------|
-...
-
-**整体结论:** {可行 / 部分可行（N个前置条件，N项待开发）/ 存在阻断}
-
-**主要前置条件:**
-{列表}
-
-**研发主要工作:**
-{列表}
-
----
-
-## 二、逐段详细分析（研发用）
-
-{每个 Step 的完整验证输出，含 API 表格、文档链接、参考资料}
-
----
-
-## 三、实现 Checklist
-
-{仅列出 ✅ 可行、⚠️ 有条件、⚠️ 需开发的 Step}
-{每 Step 生成可执行的研发 checklist}
+`intelli:report` 将生成四份文档到：
+```
+docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}/
+  pm.md / arch.md / dev.md / spec.md
 ```
 
-报告保存后告知用户路径。
+并按角色展示规则输出对话内容（完整展示当前角色文档，其余三份给路径）。
 
 ## Standalone vs Orchestrated
 
