@@ -1,30 +1,59 @@
 ---
 name: report
-description: Generates a two-tier feasibility report from the architecture mapping (intelli:map-arch). Tier 1 is a traffic-light summary for PM/Delivery. Tier 2 is a detailed gap analysis and integration checklist for developers. Saves to docs/platform-analysis/.
+description: Generates four role-specific feasibility report documents from the architecture mapping. Always produces pm.md, arch.md, dev.md, and spec.md in a subdirectory. Displays only the document matching the current user role.
 ---
 
-# intelli:report — Feasibility Report Generator
+# intelli:report — Role-Aware Feasibility Report Generator
 
 ## Purpose
 
-Generate a structured feasibility report in two tiers from the architecture mapping.
-Save it as a markdown file for sharing with PM, delivery, and dev teams.
+Generate four role-specific feasibility documents from the architecture mapping.
+Save all four to a subdirectory under `docs/platform-analysis/`. In the conversation,
+display only the document matching the current user's role, and list paths to the others.
 
-This is Phase 3 of the full analysis flow. Can also be used standalone if you
-already have the architecture mapping output.
+This is Phase 5 of the full analysis flow. Can also be used standalone.
 
 ## Input
 
 Either:
-- The architecture mapping from `intelli:map-arch` (if called from `intelli:analyze`)
-- A user-provided summary of platform capabilities and gaps (if used standalone)
+- Architecture mapping output from `intelli:map-arch` + role identifier (if called from `intelli:analyze`)
+- User-provided summary of platform capabilities and gaps + role (if used standalone)
 
-## Report Structure
+**Role identifier** (`pm` / `arch` / `dev` / `claude`):
+- If received from `intelli:analyze` context: use it directly, do not ask again
+- If called standalone with no role in context: ask once before generating:
+  ```
+  你是哪类受众？
+  1. PM / 交付
+  2. 产品 / 架构
+  3. 研发
+  4. Claude（AI 开发，生成 writing-plans 输入）
+  ```
 
-Generate the following report, filling in all sections with real analysis:
+## Output Directory
+
+Create the directory if it doesn't exist, then save four files:
+
+```
+docs/platform-analysis/YYYY-MM-DD-{platform-name}/
+  pm.md
+  arch.md
+  dev.md
+  spec.md
+```
+
+Platform name: lowercase, hyphen-separated (e.g. `zoom-contact-center`).
+
+## Document Templates
+
+Generate all four documents. Fill every section with real analysis — no placeholders.
+
+---
+
+### `pm.md` — PM / 交付版
 
 ```markdown
-# {Platform Name} 接入可行性评估
+# {Platform Name} 接入可行性评估 — PM / 交付版
 
 > 分析日期: {YYYY-MM-DD}
 > 分析人: Claude (intelli:analyze)
@@ -32,8 +61,8 @@ Generate the following report, filling in all sections with real analysis:
 
 ---
 
+{Only include if authorization model is MARKETPLACE_APP or CONDITIONAL:}
 ## ⚠️ 授权前置条件
-{Only include this block if authorization model is MARKETPLACE_APP or CONDITIONAL. If SELF_AUTH, omit entirely.}
 
 > 🚨 **本平台需通过官方 Marketplace App 审核才能对客户进行授权。**
 >
@@ -44,26 +73,97 @@ Generate the following report, filling in all sections with real analysis:
 
 ---
 
-## 一、结论（PM / 交付用）
+## 结论
 
-| 功能         | 结论            | 说明                                        |
-|--------------|-----------------|---------------------------------------------|
-| 授权模式     | {✅ 客户自助授权 / 🚨 需申请审核 / ⚠️ 部分受限} | {one sentence} |
-| 工单AI回复   | {✅/⚠️/❌} {label} | {one sentence — what works or what's missing} |
-| Livechat对接 | {✅/⚠️/❌} {label} | {one sentence}                              |
-| 数据同步     | {✅/⚠️/❌} {label} | {one sentence}                              |
+| 功能 | 结论 | 说明 |
+|------|------|------|
+| 授权模式 | {✅ 客户自助授权 / 🚨 需申请审核 / ⚠️ 部分受限} | {one sentence} |
+| 工单AI回复 | {✅/⚠️/❌} {可行/部分可行/不可行} | {one sentence} |
+| Livechat对接 | {✅/⚠️/❌} {可行/部分可行/不可行} | {one sentence} |
+| 数据同步 | {✅/⚠️/❌} {可行/部分可行/不可行} | {one sentence} |
 
-Labels: 可行 / 部分可行（需适配）/ 不可行
+## 建议
 
-### 建议
+{2–3 sentences: which features to implement, which to skip, sequencing recommendation. No technical terms.}
 
-{2–3 sentences: which features to implement, which to skip, any sequencing recommendation}
+## 工作量汇总
+
+| 功能模块 | 预计周期 |
+|---------|---------|
+| {module} | {X 天 / X 周} |
+| **合计** | **{total}** |
+
+## 主要风险
+
+- {Risk 1, non-technical language}
+- {Risk 2}
+{≤3 items}
+```
 
 ---
 
-## 二、技术差距分析（研发用）
+### `arch.md` — 产品 / 架构版
 
-### 授权与接入模式
+```markdown
+# {Platform Name} 接入可行性评估 — 产品 / 架构版
+
+> 分析日期: {YYYY-MM-DD}
+> 分析人: Claude (intelli:analyze)
+> 数据来源: {URL / file / description}
+
+---
+
+## 系统边界
+
+| 系统 | 职责 |
+|------|------|
+| {第三方平台} | {事件来源、数据提供方、配置入口} |
+| Intelli | {接收、路由、工单/会话处理} |
+| shulex_gpt | {AI 能力：ASR/TTS/NLU/Tool Call（如适用）} |
+
+## 数据流
+
+{描述事件/消息如何在三方间流转，每条一步骤：}
+
+1. {第三方平台} → Intelli: {触发事件或 API 调用，如 webhook `engagement.created`}
+2. Intelli → shulex_gpt: {AI 处理请求，如生成回复 / ASR / 意图识别}
+3. shulex_gpt → Intelli: {返回 AI 结果}
+4. Intelli → {第三方平台}: {出站操作，如发送回复 / 更新工单}
+
+## 关键架构决策
+
+{For each feasible feature dimension, one decision point:}
+
+**工单AI回复:** {直接套用现有 TicketEngine V2 SPI / 需新增适配层 — 原因}
+**Livechat对接:** {复用现有 Webhook 接收链路 / 需新 WebSocket 链路 — 原因}
+**数据同步:** {标准 ISyncService 实现 / 需定制轮询策略 — 原因}
+
+## 技术前置条件
+
+{List external dependencies that must be confirmed before development:}
+- {Condition 1: e.g., 申请 Marketplace App 审核（预计 X 周）}
+- {Condition 2: e.g., 获取测试账户 + Webhook 回调域名}
+
+## 模块依赖关系
+
+{Implementation order constraints:}
+- {Module A} 必须先于 {Module B} 实现，原因：{one sentence}
+```
+
+---
+
+### `dev.md` — 研发版
+
+```markdown
+# {Platform Name} 接入可行性评估 — 研发版
+
+> 分析日期: {YYYY-MM-DD}
+> 分析人: Claude (intelli:analyze)
+> 数据来源: {URL / file / description}
+
+---
+
+## 授权与接入模式
 
 **授权类型：** {API Key / OAuth2 / JWT / Basic Auth}
 **授权模式：** {✅ 客户自助授权 / 🚨 需 Marketplace App 审核 / ⚠️ 部分受限}
@@ -74,50 +174,48 @@ Labels: 可行 / 部分可行（需适配）/ 不可行
 - 申请材料: {描述}
 - 审核周期: {预估}
 - 受限 API: {列表}
-- **风险提示**: 建议将申请列为 P0 前置任务，优先于研发启动。
 
 ---
 
-### 工单AI回复
+## 工单AI回复
 
 **可行性：** {✅ 可行 / ⚠️ 部分可行 / ❌ 不可行}
 
 **差距列表：**
-{For each ⚠️ or ❌ gap found in map-arch:}
 - [{Minor/Medium/Blocking}] {gap description} → {recommended workaround or "no workaround"}
 
 **预估工作量：** {小（3–5天）/ 中（1–2周）/ 大（2–4周）/ 不建议实现}
 
 ---
 
-### Livechat对接
+## Livechat对接
 
 **可行性：** {✅ 可行 / ⚠️ 部分可行 / ❌ 不可行}
 
 **差距列表：**
-{same format}
+- [{Minor/Medium/Blocking}] {gap description} → {workaround or "no workaround"}
 
-**预估工作量：** {same format}
+**预估工作量：** {小 / 中 / 大 / 不建议}
 
 ---
 
-### 数据同步
+## 数据同步
 
 **可行性：** {✅ 可行 / ⚠️ 部分可行 / ❌ 不可行}
 
 **差距列表：**
-{same format}
+- [{Minor/Medium/Blocking}] {gap description} → {workaround or "no workaround"}
 
-**预估工作量：** {same format}
+**预估工作量：** {小 / 中 / 大 / 不建议}
 
 ---
 
-## 三、接入 Checklist（研发用）
+## 接入 Checklist
 
-> 仅列出可行或部分可行的功能。不可行功能不生成 checklist。
+> 仅列出可行或部分可行的功能。
 
 ### 工单AI回复接入 Checklist
-{Only include this section if Ticket AI Reply is ✅ or ⚠️}
+{Only if ✅ or ⚠️}
 
 - [ ] `ExternKeySourceEnum` 中注册新平台枚举
 - [ ] 创建 Maven 子模块 `intelli-ticket-{platform}`
@@ -139,7 +237,7 @@ Labels: 可行 / 部分可行（需适配）/ 不可行
 - [ ] 配置 webhook URL: `/v2/webhook/{PLATFORM_ID}/{token}`
 
 ### Livechat接入 Checklist
-{Only include this section if Livechat is ✅ or ⚠️}
+{Only if ✅ or ⚠️}
 
 - [ ] 实现 Livechat 消息接收通道（{WebSocket / Webhook / Polling}）
 - [ ] 实现 outbound 消息发送 — 接口: {endpoint}
@@ -148,7 +246,7 @@ Labels: 可行 / 部分可行（需适配）/ 不可行
 - [ ] 接入 Kafka 消息管道
 
 ### 数据同步接入 Checklist
-{Only include this section if Data Sync is ✅ or ⚠️, and only for feasible sub-features}
+{Only if ✅ or ⚠️}
 
 - [ ] 实现 `ISyncService` 订单同步（{if order sync feasible}）
   - [ ] 增量拉取参数: {param name}
@@ -158,46 +256,127 @@ Labels: 可行 / 部分可行（需适配）/ 不可行
 - [ ] Rate limit 处理: {strategy}
 ```
 
-## Save Location
+---
 
-Create the output directory if it doesn't exist, then save:
+### `spec.md` — Claude Spec（writing-plans 输入）
+
+```markdown
+# {Platform Name} 接入需求规格 — Claude Spec
+
+> 分析日期: {YYYY-MM-DD}
+> 用途: 供 superpowers:writing-plans 生成实现计划
+> 数据来源: {URL / file / description}
+
+---
+
+## 目标
+
+{One sentence: what integration to build and which features to implement.}
+
+## 范围
+
+**包含：**
+- {Feasible feature 1}
+- {Feasible feature 2}
+
+**不包含：**
+- {❌ infeasible feature — reason}
+
+## 现有接口约束
+
+需实现以下 Intelli SPI 接口（代码位于 shulex_intelli 仓库）：
+
+- **工单AI回复**: `TicketPlatformPlugin` + `TicketOperations`（package: `com.shulex.intelli.ticket.v2.spi`）
+- **Livechat**: `LivechatSessionManager` + outbound sender（参考现有实现）
+- **数据同步**: `ISyncService`（参考现有 Shopify / Amazon 实现）
+
+{Remove lines for infeasible features.}
+
+## 差距列表（仅可行项）
+
+| 差距 | 严重程度 | Workaround |
+|------|---------|-----------|
+| {gap description} | Minor/Medium/Blocking | {workaround or "需新开发"} |
+
+## 验收标准
+
+- **工单AI回复**: Webhook 能解析并创建工单；`sendReply()` 能成功发送回复；签名验证通过
+- **Livechat对接**: 消息能实时接收并路由到 AI；outbound 消息能送达；session 生命周期正确维护
+- **数据同步**: 增量同步无漏单；分页正确处理；rate limit 不触发 429
+
+{Remove lines for infeasible features.}
+
+## 依赖
+
+- 第三方 API 文档: {URL}
+- 需要的凭据/权限: {list}
+{If MARKETPLACE_APP:}
+- 🚨 前置条件: 需完成 Marketplace App 申请，申请入口: {URL}
+```
+
+---
+
+## Conversation Display Rules
+
+After generating and saving all four files:
+
+1. **完整展示**当前角色对应的文档内容（粘贴全文到对话）
+2. 输出其余三份路径：
 
 ```
-docs/platform-analysis/YYYY-MM-DD-{platform-name-lowercase-hyphenated}.md
+其他报告：
+- {未展示角色1}: docs/platform-analysis/YYYY-MM-DD-{platform}/xx.md
+- {未展示角色2}: docs/platform-analysis/YYYY-MM-DD-{platform}/xx.md
+- {未展示角色3}: docs/platform-analysis/YYYY-MM-DD-{platform}/xx.md
 ```
 
-Example: `docs/platform-analysis/2026-04-03-freshdesk.md`
+Role → file mapping:
+- `pm` → `pm.md`（完整展示）
+- `arch` → `arch.md`（完整展示）
+- `dev` → `dev.md`（完整展示）
+- `claude` → `spec.md`（完整展示）
 
-Announce the save path after writing: "报告已保存至 `docs/platform-analysis/...`"
+最后宣告：`报告已保存至 docs/platform-analysis/YYYY-MM-DD-{platform}/`
 
-## Chain Mode Report (链路模式报告)
+---
 
-当被 `intelli:flow-analyze` 调用时，生成链路模式报告而非三维度报告。
+## Chain Mode Report（链路模式）
 
-链路模式报告保存至：`docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}.md`
+当被 `intelli:flow-analyze` 调用时，生成链路模式四份报告。
 
-报告包含三个部分：
+保存至：`docs/platform-analysis/YYYY-MM-DD-{业务目标-slugified}/`
 
-**一、链路总览（PM / 交付用）**
-- {If MARKETPLACE_APP:} 🚨 **授权前置条件**：需完成 Marketplace App 申请审核
-- Step 汇总表：Step 编号 / 描述 / 平台 / 结论 / 关键说明
-- 整体结论（可行 / 部分可行 / 存在阻断）
+各文档内容调整：
+
+**`pm.md`（链路模式）**：
+- Step 汇总表（编号/描述/平台/结论/关键说明）
+- 整体结论
 - 主要前置条件列表
 - 研发主要工作列表
 
-**二、逐段详细分析（研发用）**
+**`arch.md`（链路模式）**：
+- 业务链路全貌（Step 序列 + 系统边界）
+- 跨平台数据流
+- 关键技术决策（每个需开发 Step 的方案选择）
+- 前置条件 + 依赖关系
+
+**`dev.md`（链路模式）**：
 - 每个 Step 的完整验证结果
 - API / 配置表格，每行附文档链接
-- 我方能力对照（来自 knowledge-base）
-- ⚠️ 有条件：附确认方式 + 参考资料链接
-- ⚠️ 需开发：附工作量估算 + 研发参考资料链接
-- ❌ 阻断：附技术限制说明和文档证据
+- 我方能力对照
+- 有条件/需开发/阻断的详细说明
 
-**三、实现 Checklist（研发用）**
-- 仅列出可行、有条件、需开发的 Step
-- 每 Step 生成可执行的研发 checklist 条目
+**`spec.md`（链路模式）**：
+- 目标：业务链路一句话描述
+- 范围：仅包含 ✅/⚠️ 的 Step
+- 每个需开发 Step 的实现需求
+- 验收标准：每 Step 的完成定义
+
+对话展示规则与标准模式相同（角色对应文档完整展示，其余给路径）。
+
+---
 
 ## Standalone vs Orchestrated
 
-- **Standalone** (`/intelli:report`): Generate and save the report, then stop.
-- **Orchestrated** (called from `intelli:analyze`): Generate and save the report, then return control to the orchestrator for checkpoint C.
+- **Standalone** (`/intelli:report`): 收集角色（若无）→ 生成四份文档 → 按规则展示 → 停止。
+- **Orchestrated**（来自 `intelli:analyze`）: 接收角色参数 → 生成四份文档 → 按规则展示 → 返回控制权给 orchestrator。
