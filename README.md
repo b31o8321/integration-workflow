@@ -66,11 +66,16 @@ Phase C:    链路可行性总结   →  有条件/需开发 附三方资料
 
 ## 各角色适用场景
 
-| 角色 | 推荐用法 | 获得产出 |
+分析开始时 Claude 会询问你的身份，整个对话和最终报告都将按角色定制。
+
+| 角色 | 对话风格 | 专属报告 |
 |------|---------|---------|
-| PM / 交付 | `/intelli:analyze` 在 Phase 2 停止 | 能力矩阵，快速判断可行性 |
-| 技术负责人 | `/intelli:analyze` 在 Phase 4 停止 | 差距分析 + 偏差评估（改造量） |
-| 研发团队 | `/intelli:analyze` 完整执行 | Markdown 报告 + 接入 checklist |
+| PM / 交付 | 业务语言，不展示 API 细节，聚焦结论与工作量 | `pm.md`：结论、建议、工作量汇总、主要风险 |
+| 产品 / 架构 | 适量技术深度，强调系统边界与架构决策 | `arch.md`：数据流、架构决策、前置条件 |
+| 研发 | 完整技术细节，主动展示 API 端点与差距 | `dev.md`：差距分析、工作量明细、接入 Checklist |
+| Claude（AI 开发） | 结构化输出，为 writing-plans 优化 | `spec.md`：需求规格、验收标准、依赖 |
+
+四份报告**总是全部生成**，对话中仅完整展示当前角色对应的那份，其余给文件路径。
 
 ## 输入格式
 
@@ -91,10 +96,14 @@ Phase C:    链路可行性总结   →  有条件/需开发 附三方资料
 
 ## 报告输出位置
 
-报告保存至当前工作目录：
+每次分析生成四份文档，保存至子目录：
 
 ```
-docs/platform-analysis/YYYY-MM-DD-{platform-name}.md
+docs/platform-analysis/YYYY-MM-DD-{platform-name}/
+  pm.md      # PM / 交付版
+  arch.md    # 产品 / 架构版
+  dev.md     # 研发版
+  spec.md    # Claude Spec（writing-plans 输入）
 ```
 
 ## Skills 列表
@@ -105,7 +114,7 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}.md
 | `intelli:flow-analyze` | 业务链路验证（Phase A/B/C + 链路报告） |
 | `intelli:check-api` | API 能力矩阵分析 |
 | `intelli:map-arch` | 映射到 Intelli 接口规范 |
-| `intelli:report` | 生成双层可行性报告 / 链路模式报告 |
+| `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec），按角色展示对应文档 |
 | `intelli:update-kb` | 分析代码库，更新系统能力知识库 |
 
 ## 版本管理（维护者必读）
