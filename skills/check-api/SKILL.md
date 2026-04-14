@@ -34,14 +34,15 @@ assign a status to each capability:
 
 ### Feature 1: 工单 AI 回复 (Ticket AI Reply)
 
-| Capability | Required? | Look for |
-|------------|-----------|---------|
-| Webhook push (inbound events) | Required | Webhook/event subscription docs |
-| Fetch ticket messages | Required | GET messages/comments on ticket |
-| Send reply | Required | POST reply/comment to ticket |
-| Read current tags/labels | Required | GET ticket tags |
-| Apply tags/labels | Required | PUT/PATCH ticket tags |
-| Webhook signature verification | Recommended | HMAC-SHA256 header, signing secret |
+| Capability | Required? | SPI Method | Look for |
+|------------|-----------|------------|---------|
+| Webhook push — custom URL | Required | parseWebhook | Platform allows configuring a custom webhook URL (POST to Shulex URL) |
+| Fetch ticket messages | Required | getMessages | GET messages/comments on ticket |
+| Fetch ticket subject | Required | getSubject | Subject/title field in ticket detail API |
+| Send reply | Required | sendReply | POST reply/comment to ticket |
+| Read current tags/labels | Required | getTags | GET ticket tags/labels |
+| Apply tags/labels | Required | applyTags | PUT/PATCH ticket tags |
+| Webhook signature verification | Recommended | parseWebhook | HMAC-SHA256 header or signing secret |
 
 ### Feature 2: Livechat 对接 (Live Chat Integration)
 
