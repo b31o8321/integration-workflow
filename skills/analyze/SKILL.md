@@ -1,7 +1,7 @@
 ---
 name: analyze
 description: Full Intelli platform analysis flow. Phase 1 collects business context and offers two modes: (1) standard three-dimension capability matrix, or (2) business flow validation with API-level detail and doc links. Use this as the single entry point for all platform evaluations.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # intelli:analyze — Platform Analysis Orchestrator
@@ -149,6 +149,33 @@ If user says continue:
   ```
 
   Wait for user to confirm before proceeding.
+
+  **知识库新鲜度检查（仅 `claude` 角色 / 进入实现时执行）：**
+
+  若当前角色为 `claude`（即准备生成实现计划），且有代码库访问权限，查看知识库最后修改日期：
+  `git log -1 --format="%ci" -- knowledge-base/intelli-capabilities.md`
+
+  若距今超过 **14 天**，或无法确认更新时间，根据角色提示不同内容：
+
+  - **有代码库（研发 / claude 角色）**：
+    ```
+    ⚠️  知识库超过 14 天未更新。
+
+    建议先运行 /intelli:update-kb 同步最新的 shulex-intelli 能力信息，
+    否则 writing-plans 的 subagent 可能会重复扫描代码，增加 token 消耗。
+
+    → 运行 /intelli:update-kb 后继续
+    → 直接跳过，继续启动 brainstorming
+    ```
+
+  - **无代码库访问权限（PM / arch 角色，仅分析不进入实现）**：
+    ```
+    ⚠️  知识库可能未更新（超过 14 天）。
+    如需生成实现计划，请联系插件维护人员先运行 /intelli:update-kb 刷新能力信息。
+    ```
+    此情况下直接跳过，继续输出报告。
+
+  等待用户选择后继续（仅 claude 角色进入实现时需等待）。
 
   Once codebases are confirmed available, invoke `superpowers:brainstorming` with the following context block (pass verbatim):
 

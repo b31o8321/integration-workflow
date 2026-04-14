@@ -4,6 +4,13 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.9.0] - 2026-04-14
+
+### Changed
+- **`intelli:analyze` 知识库新鲜度检查**：Phase 5 进入实现阶段前，若知识库超过 14 天未更新，自动提示；根据角色区分两种提示——有代码库（claude/研发）提示运行 `/intelli:update-kb`；无代码库（PM/arch）提示联系维护人员
+
+---
+
 ## [2.8.0] - 2026-04-14
 
 ### Added
