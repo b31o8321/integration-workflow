@@ -4,6 +4,19 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.7.0] - 2026-04-14
+
+### Changed
+- **`intelli:analyze` 流程精简（消除冗余人工介入）**：
+  - 角色选择去除：默认 `claude`，仅在用户明确提出 PM/架构/研发视角时切换
+  - 分析模式选择合并为一次：Phase 1 末尾问"完整/快速/链路"，不再逐阶段询问
+  - Checkpoint A/B/C 去除：选完整分析后 Phase 2→3→4→5 自动推进，无需逐步确认
+  - 仅保留最终 Checkpoint（是否进入实现阶段）
+  - `/add-dir` 提示扩展：同时提示添加 shulex-intelli 和 shulex-smart-service
+  - `brainstorming` 传入 context 新增架构背景块（ChannelAuth 约定 + Webhook 入口 + Plugin 注册方式 + 前端参考），减少 subagent 提问
+
+---
+
 ## [2.6.1] - 2026-04-14
 
 ### Changed
