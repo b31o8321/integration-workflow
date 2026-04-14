@@ -1,6 +1,6 @@
 # Intelli 系统能力
 
-> 最后更新: 2026-04-14（by 复盘修正：ChannelAuth 为新平台标准）
+> 最后更新: 2026-04-14（新增：前端集成约定、Maven 子模块约定、测试规范）
 
 ## TicketEngine V2 SPI
 
@@ -233,3 +233,220 @@ Livechat 会话结束后，将对话记录同步写入三方工单系统。
 
 - `XxxClientTest` 中的 `@Ignore` 仅防止 CI 误触，E2E 时必须去掉并填入真实凭证
 - E2E 测试账号应与生产账号隔离，使用专用 test ticket 避免影响真实数据
+
+---
+
+## 前端集成约定（shulex-smart-service）
+
+### 仓库与目录结构
+
+前端集成代码位于独立仓库 **shulex-smart-service**。
+
+```
+src/
+  pages/integration/
+    Channel/
+      index.tsx               ← 平台路由 (switch case)
+      AuthPageScaffold/       ← 全页面布局组件（所有新平台使用）
+      mod/
+        {Platform}Auth/       ← 新平台目录，如 LiveAgentAuth/
+          index.tsx            ← 主页面（AuthPageScaffold 包装）
+          {Platform}ConnectionDrawer.tsx    ← 授权表单
+          {Platform}TicketConfigDrawer.tsx  ← 功能设置（Agent / 处理范围）
+          {Platform}WebhookGuideDrawer.tsx  ← 手工操作引导
+    index.tsx                 ← 平台卡片列表
+  services/
+    integration.ts            ← Channel 类型定义 + API 函数
+```
+
+### 添加新平台需修改的文件（3 处）
+
+| 文件 | 变更内容 |
+|------|---------|
+| `src/services/integration.ts` | 1. `Channel` 联合类型新增 `'LIVE_AGENT'`（格式：大写+下划线）<br>2. 追加平台对应的 API 函数（认证/查询 Agent/读写配置/Webhook URL，约 4–6 个）|
+| `src/pages/integration/Channel/index.tsx` | 1. import 新 `{Platform}Auth` 组件<br>2. `openChannel` switch 新增 `case 'LiveAgent': return <{Platform}Auth />` |
+| `src/pages/integration/index.tsx` | 平台卡片数组新增条目（title, content, icon, nav 路径 `/integration/channel?type=LiveAgent`）|
+
+### API 端点命名约定
+
+```
+POST   /api_v2/intelli/{platform}/auth          ← 授权（创建/更新 ChannelAuth）
+DELETE /api_v2/intelli/{platform}/auth          ← 撤销授权
+GET    /api_v2/intelli/{platform}/agents        ← 获取 Agent 列表
+GET    /api_v2/intelli/{platform}/setting       ← 读取配置
+POST   /api_v2/intelli/{platform}/setting       ← 保存配置
+GET    /api_v2/intelli/{platform}/webhook-url   ← 获取 Webhook URL（+ body 模板）
+```
+
+`{platform}` 为小写，如 `liveagent`。
+
+### 参考实现
+
+| 授权模式 | 参考实现 | 说明 |
+|---------|---------|------|
+| API Key（子域名 + 密钥） | `LiveAgentAuth/` | 最新实现，含 ConnectionDrawer + TicketConfigDrawer + WebhookGuideDrawer |
+| API Key（仅密钥） | `FreshDeskAuth/`（参考，路径可能不同）| 无子域名的简化版 |
+| OAuth 跳转 | `LineAuth/` | 含子域名输入 + OAuth 跳转流程 |
+
+---
+
+## Maven 子模块约定（intelli-ticket-{platform}）
+
+### 模块位置
+
+新平台 TicketPlugin 模块位于：
+
+```
+shulex-intelli-ticket/
+  intelli-ticket-{platform}/     ← 新建此目录
+    pom.xml
+    src/main/java/com/shulex/intelli/ticket/{platform}/
+      {Platform}TicketPlugin.java
+      {Platform}TicketOperations.java
+      {Platform}ChannelAuthCredential.java
+      {Platform}PlatformContext.java          ← 如需携带额外字段
+      {Platform}TicketAutoConfiguration.java
+    src/main/resources/META-INF/spring.factories
+    src/test/java/com/shulex/intelli/ticket/{platform}/
+      {Platform}TicketPluginTest.java
+```
+
+### pom.xml 依赖结构
+
+```xml
+<parent>
+    <groupId>com.shulex</groupId>
+    <artifactId>shulex-intelli-ticket</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</parent>
+
+<dependencies>
+    <!-- 核心 SPI 接口 -->
+    <dependency>
+        <groupId>com.shulex</groupId>
+        <artifactId>intelli-ticket-core</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    <!-- HTTP Client（已有实现复用）-->
+    <dependency>
+        <groupId>com.shulex</groupId>
+        <artifactId>shulex-intelli-integration</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+    </dependency>
+    <!-- AutoConfiguration 基础设施 -->
+    <dependency>
+        <groupId>com.shulex</groupId>
+        <artifactId>intelli-ticket-spring-boot-starter</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+### 两处必须手动添加（常见遗漏）
+
+**1. 父模块 `shulex-intelli-ticket/pom.xml` 的 `<modules>` 块**
+
+```xml
+<modules>
+    <module>intelli-ticket-core</module>
+    <module>intelli-ticket-spring-boot-starter</module>
+    <module>intelli-ticket-line</module>
+    <module>intelli-ticket-liveagent</module>
+    <module>intelli-ticket-{platform}</module>   ← 新增
+</modules>
+```
+
+**2. `src/main/resources/META-INF/spring.factories`**
+
+```properties
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.shulex.intelli.ticket.{platform}.{Platform}TicketAutoConfiguration
+```
+
+> ⚠️ 这两处都不会报编译错误，但缺少任一项，Plugin 不会被 Spring 加载。
+
+---
+
+## 测试规范
+
+### 单元测试：`{Platform}TicketPluginTest`
+
+**位置**：`intelli-ticket-{platform}/src/test/java/.../{Platform}TicketPluginTest.java`
+
+**原则**：无需任何凭证和网络，只测 `parseWebhook` 等纯逻辑。用 `null` 依赖初始化 Plugin。
+
+**必须覆盖的测试用例**：
+
+| 测试方法 | 验证内容 |
+|---------|---------|
+| `testPlatformId()` | `plugin.platformId()` 返回正确枚举值字符串 |
+| `testParseWebhook_success()` | 正常 payload → `shouldProcess=true`，ticketId / tenantId / platformId / platformContext 字段均正确 |
+| `testParseWebhook_missingTicketId_skips()` | 缺少 ticketId → `shouldProcess=false` |
+| `testParseWebhook_malformedJson_skips()` | 非法 JSON → `shouldProcess=false`（不抛异常）|
+| `testExtractCredentialKey()` | 给定 token 字符串 → `CredentialKey` 的 platformId 和 rawToken 正确 |
+| `testLockKey()` | `lockKey()` 格式符合 `ticket:{platform}:{conversationId}` 规范 |
+
+### 集成测试（API 连通性）：`{Platform}ClientTest`
+
+**位置**：`shulex-intelli-integration/src/test/java/.../{Platform}ClientTest.java`
+
+**原则**：
+- 所有方法加 `@Ignore`，防止 CI 运行
+- 凭证通过类顶部常量填写，不要 hardcode 到方法体
+- **写操作**（sendReply / addTag）加 `// WARNING: creates real data` 注释，使用专用测试工单
+
+**标准测试方法**：
+
+| 方法 | 类型 | 内容 |
+|------|------|------|
+| `testCredentials()` | 读 | 验证 API Key 有效，返回 `true` |
+| `testGetAgents()` | 读 | 拉取 Agent 列表，断言非空 |
+| `testGetMessages()` | 读 | 拉取测试工单消息，断言非空 |
+| `testGetTags()` | 读 | 拉取标签，允许为空，不抛异常即通过 |
+| `testSendReply()` | **写** | 向测试工单发送固定文案 `"[Shulex Intelli test reply — please ignore]"` |
+| `testAddTag()` | **写** | 向测试工单打标签 `shulex_intelli_test` |
+
+**运行前提**：去掉 `@Ignore`，填写 `TEST_DOMAIN / TEST_API_KEY / TEST_TICKET_ID` 常量。
+
+### E2E 端对端测试
+
+**前提条件**（缺一不可）：
+- 可公网访问的 Intelli **staging 环境**（本地环境无法接收 webhook）
+- 三方平台的**测试账号**（与生产账号隔离）
+- 在三方平台后台已配置 webhook URL 指向 staging
+
+**验证顺序**：
+
+```
+Step 1: 授权验证
+  → 在 Intelli 前端打开授权页，填入测试账号凭证，点击"连接"
+  → 确认前端显示"已授权"状态
+  → 获取前端展示的 Webhook URL
+
+Step 2: Webhook 配置
+  → 在三方平台后台配置 Webhook URL（或创建 Automation Rule），
+    指向 Step 1 获取的 URL
+  → 若平台需要手动配置 body 模板，使用 Manual Guidance 页面的模板
+
+Step 3: API 连通性（运行 ClientTest）
+  → 去掉 @Ignore，填入测试凭证，运行：
+    mvn test -Dtest={Platform}ClientTest -pl shulex-intelli-integration
+  → testCredentials() 必须返回 true
+  → testGetMessages() 必须拉到消息（工单 TEST_TICKET_ID 需有历史消息）
+
+Step 4: 完整链路验证
+  → 在三方平台创建一条测试工单（或回复已有工单触发 webhook）
+  → 查看 staging 日志确认 webhook 被接收：
+    grep "LIVEAGENT\|liveagent" /logs/intelli.log
+  → 等待 AI 自动回复（通常 10–30 秒）
+  → 在三方平台工单界面确认：
+    ✅ AI 回复内容出现
+    ✅ 工单被打上 shulex_ai_replied 标签
+```
+
+**常见失败原因**：
+- Webhook 未收到 → 检查三方平台 Rule 是否触发、URL 是否正确、防火墙是否放行
+- AI 回复未出现 → 查日志排查 resolveCredential() 是否找到 ChannelAuth 记录
+- 标签未打上 → 查日志确认 applyTags() 没有抛异常

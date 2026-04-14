@@ -384,37 +384,65 @@ Generate all four documents. Fill every section with real analysis — no placeh
 {For each feasible feature (✅ or ⚠️), include the corresponding lines:}
 
 **工单AI回复（单元测试）:**
-- [ ] `XxxTicketPluginTest.parseWebhook_success()` — webhook 解析正常
-- [ ] `XxxTicketPluginTest.parseWebhook_missingTicketId_skips()` — 缺字段时跳过
-- [ ] `XxxTicketPluginTest.parseWebhook_malformedJson_skips()` — 非法 JSON 跳过
-- [ ] `XxxTicketPluginTest.extractCredentialKey()` — 凭证 key 提取正确
-- [ ] `XxxTicketPluginTest.lockKey()` — 锁 key 格式正确
+
+测试类位置：`intelli-ticket-{platform}/src/test/java/.../XxxTicketPluginTest.java`
+无需凭证，用 `null` 依赖初始化 Plugin：`plugin = new XxxTicketPlugin(null, null, null)`
+
+- [ ] `testPlatformId()` — `platformId()` 返回正确枚举值字符串（如 `"LIVEAGENT"`）
+- [ ] `testParseWebhook_success()` — 正常 payload → `shouldProcess=true`，ticketId / tenantId / platformId 均正确
+- [ ] `testParseWebhook_missingTicketId_skips()` — 缺 ticketId → `shouldProcess=false`
+- [ ] `testParseWebhook_malformedJson_skips()` — 非法 JSON → `shouldProcess=false`，不抛异常
+- [ ] `testExtractCredentialKey()` — token 字符串 → CredentialKey.platformId 和 rawToken 正确
+- [ ] `testLockKey()` — 格式符合 `ticket:{platform}:{conversationId}`
+
+运行命令：`mvn test -Dtest=XxxTicketPluginTest -pl intelli-ticket-{platform}`
 
 ### E2E 端对端测试（上线前必须手动执行）
 
-> 需要：真实 {Platform} 测试账号 + 可公网访问的 Intelli 测试环境（如 staging）
+> **前提条件（缺一不可）：**
+> - 可公网访问的 Intelli **staging 环境**（本地环境无法接收 webhook）
+> - {Platform} **测试账号**（与生产账号隔离，避免污染真实数据）
+> - staging 环境日志访问权限
 
 {For each feasible feature (✅ or ⚠️), include the corresponding section:}
 
-**工单AI回复 E2E:**
-- [ ] **前置**：在 Intelli 前端完成授权，获取 webhook URL
-- [ ] **前置**：在 {Platform} 后台配置 webhook URL，指向测试环境
-- [ ] **API连通性**：运行 `XxxClientTest`（去掉 `@Ignore`，填入真实凭证），确认 `testCredentials()` 返回 true
-- [ ] **消息读取**：`testGetMessages()` 能拉取到测试工单的消息
-- [ ] **发送回复**：`testSendReply()` 能向测试工单写入回复，并在 {Platform} 界面中可见
-- [ ] **打标签**：`testAddTag()` 能给测试工单打标签，并在 {Platform} 界面中可见
-- [ ] **完整链路**：在 {Platform} 创建一条真实工单，确认：
-  - Intelli webhook 收到推送（查 staging 日志）
-  - AI 回复在 {Platform} 工单中出现
-  - `shulex_ai_replied` 标签被打上
+**工单AI回复 E2E（按顺序执行）:**
+
+Step 1 — 授权验证
+- [ ] 在 Intelli 前端打开 {Platform} 授权页，填入测试账号凭证，点击"连接"
+- [ ] 前端显示"已授权"状态，复制 Webhook URL
+
+Step 2 — Webhook 配置
+- [ ] 在 {Platform} 后台配置 Webhook URL（或创建 Automation Rule），
+      指向 Step 1 复制的 staging URL
+- [ ] 若平台需手动填写 body 模板（如 LiveAgent Rules），使用授权页 Manual Guidance 中的模板
+
+Step 3 — API 连通性（运行 ClientTest）
+- [ ] 在 `shulex-intelli-integration/.../XxxClientTest.java` 填写测试凭证常量
+- [ ] 去掉 `@Ignore`，运行：`mvn test -Dtest=XxxClientTest -pl shulex-intelli-integration`
+- [ ] `testCredentials()` 返回 true
+- [ ] `testGetMessages()` 拉取到测试工单消息（需提前准备有消息的工单）
+- [ ] `testSendReply()` 执行后，回复在 {Platform} 界面中可见（确认后恢复 `@Ignore`）
+- [ ] `testAddTag()` 执行后，标签 `shulex_intelli_test` 在 {Platform} 界面中可见
+
+Step 4 — 完整链路验证
+- [ ] 在 {Platform} 创建一条测试工单（或回复已有工单触发 webhook）
+- [ ] 查 staging 日志确认 webhook 被接收：`grep "{PLATFORM_ID}" /logs/intelli.log | grep "webhook"`
+- [ ] 等待 10–30 秒，确认 AI 回复出现在 {Platform} 工单中
+- [ ] 确认工单被打上 `shulex_ai_replied` 标签
+
+**常见失败排查：**
+- webhook 未收到 → 检查 Rule 是否触发、URL 是否正确、网络是否通
+- AI 回复未出现 → 查日志排查 `resolveCredential()` 是否报 null
+- 标签未打上 → 查日志确认 `applyTags()` 无异常
 
 **Livechat E2E（如适用）:**
-- [ ] 发送真实消息，AI 响应出现在对话中
+- [ ] 发送真实消息，确认 AI 响应出现在对话中（查日志确认消息路由）
 - [ ] 转人工场景：`transfer_to_agent` 标签正确打上
 
 **数据同步 E2E（如适用）:**
 - [ ] 增量拉取返回最近 N 条订单，无重复、无漏拉
-- [ ] 模拟 rate limit：429 后自动重试成功
+- [ ] 模拟 rate limit：429 后日志显示自动重试，最终成功
 
 ## 依赖
 
@@ -707,18 +735,25 @@ Role → file mapping:
 
 ### 自动化测试（代码合并前）
 
-{For each ✅/⚠️ Step:}
-- **Step {N}**: {具体单元测试通过条件}
+{For each ✅/⚠️ Step involving TicketPlugin implementation:}
+- **Step {N} 单元测试**:
+  - `XxxTicketPluginTest.testPlatformId()` 通过
+  - `XxxTicketPluginTest.testParseWebhook_success()` 通过
+  - `XxxTicketPluginTest.testParseWebhook_missingTicketId_skips()` 通过
+  - `XxxTicketPluginTest.testParseWebhook_malformedJson_skips()` 通过
+
+运行：`mvn test -Dtest=XxxTicketPluginTest -pl intelli-ticket-{platform}`
 
 ### E2E 端对端测试（上线前必须手动执行）
 
-> 需要：真实测试账号 + 可公网访问的 Intelli 测试环境（如 staging）
+> **前提：** 可公网访问的 staging 环境 + 测试账号 + staging 日志访问权限
 
 {For each ✅/⚠️ Step:}
 - **Step {N} E2E**:
-  - [ ] {前置配置步骤，如 "在平台后台配置 webhook URL"}
-  - [ ] {API连通性验证，如 "运行 XxxClientTest，去掉 @Ignore，确认 testCredentials() 返回 true"}
-  - [ ] {完整链路验证，如 "创建真实工单，确认 AI 回复出现在平台 UI 中"}
+  - [ ] 授权验证：Intelli 前端完成授权，显示"已授权"
+  - [ ] Webhook 配置：在平台后台配置 Webhook URL 指向 staging
+  - [ ] API 连通性：去掉 `@Ignore`，运行 `XxxClientTest`，`testCredentials()` 返回 true，`testGetMessages()` 拉取到消息
+  - [ ] 完整链路：创建真实工单 → 查 staging 日志确认 webhook 收到 → AI 回复在平台 UI 中出现 → `shulex_ai_replied` 标签被打上
 
 ## 依赖与前置条件
 

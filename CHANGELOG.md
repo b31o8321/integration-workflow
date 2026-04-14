@@ -4,6 +4,19 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.8.0] - 2026-04-14
+
+### Added
+- **`knowledge-base/intelli-capabilities.md` 前端集成约定**：shulex-smart-service 目录结构、三个必改文件（integration.ts / Channel/index.tsx / integration/index.tsx）、API 端点命名约定、参考实现对照表
+- **`knowledge-base/intelli-capabilities.md` Maven 子模块约定**：pom.xml 依赖结构、两处常见遗漏（父 pom modules 块 + spring.factories 注册）
+- **`knowledge-base/intelli-capabilities.md` 测试规范**：单元测试必须覆盖的 6 个 test case + 运行命令；ClientTest 标准方法表 + @Ignore 约定；E2E 四步执行顺序 + 常见失败排查
+- **`intelli:report` spec.md 测试模板**：单元测试展开为具体测试方法 + 运行命令；E2E 展开为 4 个步骤（授权验证 → Webhook 配置 → API 连通性 → 完整链路），加入 staging 日志验证步骤和常见失败排查
+
+### Changed
+- `shulex-intelli/CLAUDE.md` 新增多仓库协作约定（双仓库分工、开发顺序、分支命名、PR 顺序）
+
+---
+
 ## [2.7.0] - 2026-04-14
 
 ### Changed
