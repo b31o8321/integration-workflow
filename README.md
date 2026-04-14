@@ -116,6 +116,7 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}/
 | `intelli:check-api` | API 能力矩阵分析（工单/Livechat/数据同步/前端集成四维度） |
 | `intelli:map-arch` | 映射到 Intelli 接口规范（含 ChannelAuth 凭证模式判断） |
 | `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec）；spec.md 含 E2E 验收 Checklist |
+| `intelli:retrospective` | 集成项目完成后的复盘：更新知识库、修正 Skill 错误、提炼架构约定；`finishing-a-development-branch` 完成后自动触发 |
 | `intelli:update-kb` | 分析代码库，更新系统能力知识库 |
 
 ## 集成验收要求

@@ -4,6 +4,15 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.6.0] - 2026-04-14
+
+### Added
+- **`intelli:retrospective` Skill**：新增复盘 Skill，集成项目开发完成后主动运行，更新知识库、修正 Skill 错误、提炼架构约定；输出标准格式复盘报告
+- **`intelli:analyze` Post-Implementation 节**：新增"实现完成后"触发说明，要求 `finishing-a-development-branch` 完成后主动调用 `intelli:retrospective`
+- **`shulex-intelli/CLAUDE.md` 集成项目复盘规则**：新增强制规则，每次集成分支完成后必须主动运行 `/intelli:retrospective`
+
+---
+
 ## [2.5.0] - 2026-04-14
 
 ### Changed

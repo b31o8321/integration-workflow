@@ -215,6 +215,22 @@ If user says continue:
   - Deviation assessment per feature (直接套用 / 简单改造 / 新链路设计, from Phase 2.5)
   - The path to the saved report file
   - Note: "请参考报告中的接入 checklist 作为实现起点"
+  - Note: "实现完成并执行 superpowers:finishing-a-development-branch 之后，主动运行 /intelli:retrospective 进行复盘"
+
+---
+
+## Post-Implementation: Retrospective
+
+**每次集成项目分支完成（`superpowers:finishing-a-development-branch` 执行完毕）后，主动调用 `intelli:retrospective` 进行复盘。**
+
+无需等待用户提示。复盘应在以下任意时刻发生：
+- `finishing-a-development-branch` 完成后（Option 1 merge / Option 2 PR created / Option 4 discard）
+- 用户确认开发工作结束时
+
+传入 context：
+- 平台名称
+- 实现的功能列表
+- 开发过程中纠正的偏差（若有）
 
 ---
 

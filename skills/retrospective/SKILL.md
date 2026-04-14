@@ -1,0 +1,137 @@
+---
+name: retrospective
+description: Post-integration retrospective. Reviews what was just built, updates the knowledge base and skill files with any gaps or corrections found, and bumps the plugin version. Run after each integration project branch completes.
+version: 1.0.0
+---
+
+# intelli:retrospective — Post-Integration Retrospective
+
+## Purpose
+
+集成项目开发完成后，进行结构化复盘：
+
+1. 更新 `knowledge-base/intelli-capabilities.md`（新平台、新发现）
+2. 修正集成分析 Skill 中的知识错误或流程空缺
+3. 提炼并确认本次发现的架构约定
+4. 更新 `shulex-intelli/CLAUDE.md`（如有新的架构规则）
+5. Bump 插件版本（如有 Skill 或知识库变更）
+
+## 触发时机
+
+- **`superpowers:finishing-a-development-branch` 执行完成之后**，由 Claude 主动发起
+- 或用户手动执行 `/intelli:retrospective`
+
+## Input
+
+优先从当前会话上下文读取；如在新会话中运行，询问：
+
+```
+请告知本次集成项目信息：
+
+1. 平台名称: {e.g. LiveAgent}
+2. 实现的功能: {Ticket AI 回复 / Livechat / 数据同步 / 前端接入页，可多选}
+3. 开发过程中遇到的偏差或纠正点: {描述；若无则填"无"}
+```
+
+## Retrospective Flow
+
+### Step 1: 知识库同步（intelli-capabilities.md）
+
+读取 `knowledge-base/intelli-capabilities.md`，逐项核对：
+
+**1.1 已接入平台列表**
+- 新平台是否已加入对应凭证模式分区（ChannelAuth / ExternKey）？
+- 平台类型（Ticket / Livechat / 数据同步）是否正确？
+
+**1.2 已实现 TicketPlatformPlugin 平台表**
+- 新平台是否已列入？凭证模式、参考实现是否填写？
+
+**1.3 SPI 方法状态**
+- 本次开发中是否发现任何方法行为与文档描述不符？
+
+**1.4 新凭证模式或 Adapter 模式**
+- 若引入了新的代码模式（如 `toExternKey()` adapter），是否需要记录为约定？
+
+若有变更 → 执行更新，刷新顶部"最后更新"日期
+若无变更 → 输出 `intelli-capabilities.md 无需更新`
+
+---
+
+### Step 2: Skill 质量检查
+
+对照本次开发过程，逐一评估以下 Skill 文件是否存在误导性或缺失内容：
+
+| 文件 | 检查重点 |
+|------|---------|
+| `skills/map-arch/SKILL.md` | 架构映射表 SPI 方法说明是否准确；枚举注册是否指向正确（ChannelTypeEnum not ExternKeySourceEnum）|
+| `skills/check-api/SKILL.md` | 能力矩阵维度是否覆盖了本次新情况 |
+| `skills/report/SKILL.md` | spec.md / dev.md Checklist 是否需要补充；E2E 验收要求是否完整 |
+| `skills/analyze/SKILL.md` | 流程卡点是否需要说明；brainstorming 传入的 context 是否足够 |
+| `skills/update-kb/SKILL.md` | 知识库扫描逻辑是否需要新增（如 ChannelTypeEnum 扫描）|
+
+**只在发现实际问题时更新，不做预防性修改。**
+
+---
+
+### Step 3: 架构约定提炼
+
+若本次开发发现了新的架构约定，输出总结：
+
+```
+本次提炼的架构约定：
+- {约定描述}: {一句话说明，如 "新平台统一用 ChannelAuth，覆盖 resolveCredential() + resolveCredentialByKey()，参考 LineTicketPlugin"}
+```
+
+检查每条约定是否已覆盖：
+
+| 约定 | intelli-capabilities.md | map-arch | report spec.md checklist | shulex-intelli CLAUDE.md |
+|------|:---:|:---:|:---:|:---:|
+| {约定} | ✅/❌ | ✅/❌ | ✅/❌ | ✅/❌ |
+
+对任何 ❌ 项执行补充更新。
+
+若无新约定 → 输出 `无新架构约定`
+
+---
+
+### Step 4: 版本更新
+
+若 Step 1–3 修改了任何文件：
+
+```bash
+# 仅知识库更新 → patch
+# Skill 流程或模板变更 → minor
+```
+
+更新顺序：
+1. `package.json` — bump 版本号
+2. `.claude-plugin/plugin.json` — 同步版本号
+3. `.claude-plugin/marketplace.json` — 同步版本号
+4. `CHANGELOG.md` — 添加版本条目，列出变更项
+5. `README.md` — 若有新 Skill 或重要变更，更新对应说明
+
+Commit 并 push：
+```bash
+git add -A
+git commit -m "chore: post-integration retrospective — {platform}"
+git push
+```
+
+若无任何修改 → 输出 `插件无需更新`
+
+---
+
+## Output Format
+
+复盘完成后输出：
+
+```
+复盘完成：{Platform Name} 集成
+
+知识库更新: {更新了 X 项 / 无需更新}
+Skill 更新: {更新了 X 个文件 / 无需更新}
+架构约定:   {提炼了 X 条 / 无新约定}
+插件版本:   {已 bump 至 X.X.X / 无变化}
+
+{若有重要发现或后续建议，此处附一段话}
+```
