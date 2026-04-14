@@ -152,11 +152,50 @@ API / 配置:
 {列出所有"需开发"Step 的开发任务，每条一行}
 ```
 
+## Phase D: 前端集成评估
+
+After Phase C, synthesize authorization and manual configuration findings from
+Phase B into a structured Frontend Integration section. Scan all Phase B steps for:
+
+- **授权/凭证类 Step**（平台鉴权、API Key 生成、OAuth 授权）→ AUTH SECTION
+- **我方系统配置 Step**（在 Intelli/shulex_gpt 侧的功能开关或参数设置）→ FEATURE SETTINGS SECTION
+- **三方后台操作 Step**（需用户在三方平台管理后台手工完成的操作）→ MANUAL GUIDANCE
+
+Output this section in the conversation:
+
+```
+前端集成评估 (Frontend Integration)
+─────────────────────────────────────────
+（从 Phase B 各 Step 汇总授权和手工操作信息）
+
+AUTH SECTION
+授权方式: {从授权/凭证类 Step 推导：OAuth 跳转 / API Key 填写 / 子域名+OAuth / 多步骤}
+输入字段:
+  - {字段名}: {用途} [必填/选填]
+  — 无输入字段（OAuth 跳转，无需预填）   ← 纯 OAuth 无子域名时用此行
+手工前置步骤（三方平台操作，前端展示引导）:
+  ⚠️ {步骤描述}    ← 仅当有手工步骤时；否则写 "— 无手工前置步骤"
+
+FEATURE SETTINGS SECTION
+{从"我方系统配置 Step"提取，每个功能点一行}
+  - {功能名}: {可配置项说明}
+  — 无需额外功能配置    ← 若无我方系统配置 Step
+
+MANUAL GUIDANCE（需在三方平台手工完成，前端展示操作引导）
+  ⚠️ Webhook URL 配置: 前端展示 Shulex Webhook URL，提示用户在三方后台填入  ← 仅当涉及 Webhook 时包含
+  ⚠️ {其他三方后台操作 Step 的操作说明}
+  — 无手工步骤    ← 无 Webhook 且无其他三方后台操作时用此行
+```
+
+Pass this Frontend Integration section to `intelli:report` as additional context
+alongside the chain-mode flag.
+
 ## Report Generation
 
 Phase C 完成后，调用 `intelli:report` skill，传入：
 - Phase B 的完整验证结果
 - Phase C 的链路可行性总结
+- Phase D 的前端集成评估（Frontend Integration section）
 - 当前用户角色（`pm` / `arch` / `dev` / `claude`）
 - 模式标识：`chain-mode`（让 report skill 使用链路模式模板）
 
