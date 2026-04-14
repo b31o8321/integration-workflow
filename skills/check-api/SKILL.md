@@ -96,6 +96,37 @@ Assign one of:
 | Pagination | Required | cursor-based or page+size |
 | Rate limit documentation | Recommended | X-RateLimit headers or rate limit policy |
 
+### Feature 4: 前端集成评估 (Frontend Integration)
+
+Based on the authorization model and API capabilities already analyzed, derive the
+frontend Drawer spec. Do not re-query any docs — use what was found in Features 0–3.
+
+**AUTH SECTION** — determine from Feature 0 (Authorization Model):
+
+| Derive | From |
+|--------|------|
+| 授权方式 | Auth type: OAuth2 → "OAuth 跳转"; API Key → "API Key 填写"; 子域名 + OAuth → "子域名+OAuth" |
+| 输入字段 | Any inputs needed before the auth action (e.g. subdomain, account ID) |
+| 手工前置步骤 | MARKETPLACE_APP or CONDITIONAL steps the user must perform in the third-party admin console before they can authorize |
+
+**FEATURE SETTINGS SECTION** — one line per feasible feature:
+
+For each feature that is ✅ or ⚠️, describe what configuration options the frontend
+needs to expose. Common items:
+- 工单 AI 回复: agent identity selection, processing scope (all tickets vs. specific views/queues), tag configuration
+- Livechat: agent identity, channel/queue assignment, credential inputs if not covered by main auth
+- 数据同步: sync frequency, data range, field mapping options
+
+If a feature needs no frontend configuration beyond enabling it, write "无需额外配置".
+If a feature is ❌, write "N/A".
+
+**MANUAL GUIDANCE** — third-party platform operations the user must perform manually:
+- Always include: Webhook URL display (user must paste Shulex's webhook URL into the
+  third-party platform's webhook settings page)
+- Add any other manual steps found during analysis (e.g. creating an OAuth app, enabling
+  specific API scopes, configuring routing rules)
+- If no manual steps are needed beyond webhook URL: write only the webhook URL row
+
 ## Output Format
 
 After analysis, output the capability matrix in this exact format:
@@ -144,12 +175,33 @@ FEATURE 3: 数据同步
 ✅ Pagination            — {note, e.g. "cursor-based"}
 ⚠️ Rate limits           — {note}
 
+FEATURE 4: 前端集成评估 (Frontend Integration)
+─────────────────────────────────────────
+
+AUTH SECTION
+授权方式: {OAuth 跳转 / API Key 填写 / 子域名+OAuth / 多步骤}
+输入字段:
+  - {字段名}: {用途} [必填/选填]
+手工前置步骤（三方平台操作，前端展示引导）:
+  ⚠️ {步骤描述}       ← 仅当有手工步骤时；否则写 "— 无手工前置步骤"
+
+FEATURE SETTINGS SECTION
+  - 工单 AI 回复: {可配置项，如 Agent 选择 / 处理范围 / 无需额外配置 / N/A}
+  - Livechat:     {可配置项 或 N/A}
+  - 数据同步:     {可配置项 或 N/A}
+
+MANUAL GUIDANCE（需在三方平台手工完成，前端展示操作引导）
+  ⚠️ Webhook URL 配置: 前端展示 Shulex Webhook URL，提示用户在三方后台填入
+  ⚠️ {其他手工步骤}
+  — 无额外手工步骤    ← 仅 Webhook URL 一项时用此行替换其他 ⚠️ 行
+
 SUMMARY
 ═══════════════════════════════════════════════════════════════
 授权模式:    {✅ SELF_AUTH / 🚨 MARKETPLACE_APP（需申请审核） / ⚠️ CONDITIONAL}
 工单 AI 回复:  {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
 Livechat 对接: {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
 数据同步:      {✅ 全部支持 / ⚠️ 部分支持 / ❌ 无法支持}
+前端集成:      {简评，如 "OAuth 跳转授权 + 1 项手工 Webhook 配置" / "API Key 填写，无手工步骤"}
 {If MARKETPLACE_APP:}
 🚨 注意: 接入前需完成 Marketplace App 申请，建议尽早启动审核流程。
 ```
