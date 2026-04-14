@@ -42,7 +42,9 @@ assign a status to each capability:
 | Send reply | Required | sendReply | POST reply/comment to ticket |
 | Read current tags/labels | Required | getTags | GET ticket tags/labels |
 | Apply tags/labels | Required | applyTags | PUT/PATCH ticket tags |
-| Webhook signature verification | Recommended | parseWebhook | HMAC-SHA256 header or signing secret |
+| Webhook signature verification | Recommended | parseWebhook | HMAC signature header or signing secret (e.g. HMAC-SHA256, X-Hub-Signature) |
+
+> `parseWebhook` handles both webhook parsing and signature verification — it intentionally appears on two rows.
 
 ### Feature 2: Livechat 对接 (Live Chat Integration)
 
