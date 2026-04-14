@@ -1,8 +1,24 @@
 # Intelli 系统能力
 
-> 最后更新: 2026-04-09（by intelli:update-kb，扫描 Controller 层）
+> 最后更新: 2026-04-14（by 复盘修正：ChannelAuth 为新平台标准）
 
 ## TicketEngine V2 SPI
+
+### 凭证模式说明
+
+> ⚠️ **新平台一律使用 ChannelAuth 模式，不使用 ExternKey 模式。**
+
+| 模式 | 表 | 枚举 | 适用场景 |
+|------|----|------|---------|
+| **ChannelAuth（新）** | `channel_auth` | `ChannelTypeEnum` | **所有新接入平台**，覆盖 `resolveCredential()` + `resolveCredentialByKey()`，参考 `LineTicketPlugin` |
+| ExternKey（遗留）| `extern_key` | `ExternKeySourceEnum` | 存量平台（Gorgias、Zendesk 等），新平台不再使用 |
+
+新平台接入 Checklist（凭证相关）：
+- [ ] `ChannelTypeEnum` 新增枚举值
+- [ ] 实现 `XxxChannelAuthCredential implements TicketCredential`（appKey=domain, channelSecret=密钥）
+- [ ] `XxxTicketPlugin` 覆盖 `resolveCredential()` 和 `resolveCredentialByKey()`
+- [ ] `XxxTicketAutoConfiguration` 注入 `IChannelAuthRepository` + `ApiKeyService`
+- [ ] Controller 使用 `IChannelAuthRepository` 存储 ChannelAuthDO
 
 ### TicketPlatformPlugin 接口
 
@@ -11,7 +27,8 @@
 | `parseWebhook()` | ✅ | 签名验证在方法内部实现 |
 | `extractCredentialKey()` | ✅ | 从 URL path token 提取 |
 | `createOperations()` | ✅ | 支持带 TicketEvent 的重载版本 |
-| `resolveCredential()` | ✅ | 可选覆盖，适用于非 ExternKey 体系平台（如 LINE） |
+| `resolveCredential()` | ✅ | **新平台必须覆盖**。新平台一律使用 ChannelAuth 模式（`IChannelAuthRepository`），不走默认 ExternKey CredentialResolver。参考 `LineTicketPlugin.resolveCredential()` |
+| `resolveCredentialByKey()` | ✅ | **新平台必须覆盖**。同上，用 rawToken → ApiKeyService → tenantId → ChannelAuth。参考 `LineTicketPlugin.resolveCredentialByKey()` |
 | `parsePlatformConfig()` | ✅ | 解析 ExternKey.metadata JSON |
 
 ### TicketOperations 接口
@@ -28,13 +45,25 @@
 
 ### 已实现 TicketPlatformPlugin 的平台（新 SPI）
 
-| 平台 | 状态 | 备注 |
-|------|------|------|
-| LINE | ✅ | `LineTicketPlugin`，不走 ExternKey 锁机制 |
-| Gorgias | ✅ | `GorgiasTicketPlugin` |
-| 其他平台 | ⚠️ | 通过旧版适配层接入，未迁移到新 SPI |
+| 平台 | 凭证模式 | 参考实现 | 备注 |
+|------|---------|---------|------|
+| LINE | ChannelAuth ✅ | `LineTicketPlugin` | 标准参考实现，新平台照此模式 |
+| LiveAgent | ChannelAuth ✅ | `LiveAgentTicketPlugin` | 无 HMAC，URL path token 替代签名 |
+| Gorgias | ExternKey（遗留）| `GorgiasTicketPlugin` | 旧模式，不作为新平台参考 |
+| 其他平台 | ExternKey（遗留）| — | 通过旧版适配层接入，未迁移到新 SPI |
 
-## 已接入平台（ExternKeySourceEnum）
+## 已接入平台
+
+### ChannelAuth 模式（新）
+
+| 平台 | 类型 | 状态 |
+|------|------|------|
+| LINE | Ticket | ✅ |
+| LiveAgent | Ticket | ✅ |
+
+### ExternKey 模式（遗留）
+
+> 存量平台维护用，新平台不再新增。
 
 | 平台 | 类型 | 状态 |
 |------|------|------|

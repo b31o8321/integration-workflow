@@ -36,7 +36,7 @@ Map each platform capability to the TicketEngine V2 interface requirement:
 | `TicketOperations.sendReply()` | POST reply/comment API | | |
 | `TicketOperations.applyTags()` | Add tags to ticket API | | |
 | Webhook signature verification | HMAC header + signing secret | | |
-| `ExternKeySourceEnum` registration | Unique platform identifier | Always ✅ | Add enum value |
+| `ChannelTypeEnum` registration | Unique platform identifier | Always ✅ | 新平台一律用 ChannelAuth（`ChannelTypeEnum` + `IChannelAuthRepository`），不用 ExternKey。在 `ChannelTypeEnum` 加枚举值，覆盖 `resolveCredential()` 和 `resolveCredentialByKey()`，参考 `LineTicketPlugin`。 |
 
 Fill each Status cell with: ✅ / ⚠️ (with workaround note) / ❌ (blocking gap)
 
