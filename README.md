@@ -1,6 +1,6 @@
 # intelli — Shulex Intelli 平台接入分析插件
 
-在 Claude Code 中评估第三方平台能否接入 Shulex Intelli，覆盖三个核心功能维度：工单 AI 回复、Livechat 对接、数据同步。
+在 Claude Code 中评估第三方平台能否接入 Shulex Intelli，覆盖四个核心评估维度：工单 AI 回复、Livechat 对接、数据同步、**前端集成评估**。
 
 ## 安装
 
@@ -37,7 +37,7 @@ Phase 1 收集业务背景后，选择分析模式：
 **模式一：标准能力评估**
 ```
 Phase 1: 业务场景收集 + 模式选择
-Phase 2: API 能力检查    →  三维度能力矩阵
+Phase 2: API 能力检查    →  四维度能力矩阵（工单/Livechat/数据同步/前端集成）
 Phase 3: 架构映射        →  接口差距分析
 Phase 4: 偏差评估        →  直接套用 / 简单改造 / 新链路设计
 Phase 5: 可行性报告      →  研发 checklist + 工作量评估
@@ -50,6 +50,7 @@ Phase 1:    业务场景收集 + 模式选择
 Phase A:    AI 推导技术链路  →  用户确认/修正
 Phase B:    逐段 API 验证    →  API端点 + 文档链接 + 系统能力对照
 Phase C:    链路可行性总结   →  有条件/需开发 附三方资料
+Phase D:    前端集成评估     →  Drawer 规格（授权/功能设置/手工操作引导）
 报告生成:   链路可行性报告   →  PM总览 + 研发详情 + 实现checklist
 ```
 适合：有明确业务场景，需要知道端到端能否跑通
@@ -112,7 +113,7 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}/
 |-------|------|
 | `intelli:analyze` | 平台分析入口（标准模式 + 链路模式） |
 | `intelli:flow-analyze` | 业务链路验证（Phase A/B/C + 链路报告） |
-| `intelli:check-api` | API 能力矩阵分析 |
+| `intelli:check-api` | API 能力矩阵分析（工单/Livechat/数据同步/前端集成四维度） |
 | `intelli:map-arch` | 映射到 Intelli 接口规范 |
 | `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec），按角色展示对应文档 |
 | `intelli:update-kb` | 分析代码库，更新系统能力知识库 |

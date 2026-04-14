@@ -4,6 +4,22 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.4.0] - 2026-04-14
+
+### Added
+- **`intelli:check-api` Feature 4**：新增前端集成评估维度，在能力矩阵中输出 Drawer 规格（AUTH SECTION / FEATURE SETTINGS SECTION / MANUAL GUIDANCE），SUMMARY 新增 `前端集成` 行
+- **`intelli:flow-analyze` Phase D**：在 Phase C 后新增前端集成汇总阶段，从 Phase B 步骤中聚合授权、功能配置、手工操作信息，传入 `intelli:report`
+- **`intelli:report` 前端集成 section**：全部 8 份报告模板（4 标准 + 4 链路模式）新增前端集成内容，深度按角色递增：pm.md（ASCII Drawer 截面图）→ arch.md（授权机制 + Drawer 结构）→ dev.md（字段表 + 接口 + 状态描述）→ spec.md（完整 UI 规格：字段校验 / 状态机 / API 签名 / 错误处理）
+
+### Changed
+- `intelli:check-api` Feature 1 (工单 AI 回复) 表格对齐 Ticket v2 SPI：新增 `SPI Method` 列、新增 `Fetch ticket subject`（`getSubject`）行、"Webhook push" 语义改为"支持自定义 Webhook URL"
+- Webhook 签名验证 Look-for 描述扩展至 HMAC-SHA256 以外的算法；`parseWebhook` 双重用途标注说明
+
+### Chore
+- Bumped `plugin.json` and `marketplace.json` to v2.4.0
+
+---
+
 ## [2.3.0] - 2026-04-14
 
 ### Added
