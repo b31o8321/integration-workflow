@@ -388,6 +388,68 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - 需要的凭据/权限: {list}
 {Only include if authorization model is MARKETPLACE_APP or CONDITIONAL:}
 - 🚨 前置条件: 需完成 Marketplace App 申请，申请入口: {URL}
+
+## 前端集成规格
+
+### Auth Section
+
+**授权方式:** {OAuth2 跳转 / API Key 直存 / 子域名+OAuth}
+
+**输入字段:**
+
+| 字段名 | 类型 | 必填 | 校验规则 | placeholder |
+|--------|------|------|---------|-------------|
+| {字段} | Input / Input.Password | true/false | {规则，如 required / 正则} | {提示文字} |
+
+**状态机:**
+- `unauthenticated`: 表单展开，Revoke 按钮隐藏
+- `authenticating`: 提交按钮 loading，字段 disabled
+- `authenticated`: 表单折叠，显示 "✓ 已授权" + Revoke 按钮
+- `revoking`: Revoke 确认弹窗 → 成功后回到 `unauthenticated`
+
+**接口:**
+- 发起授权: `POST /integration/{platform}/auth` · body: `{ {字段名}: string }` · response: `{ auth_url: string }` (OAuth) 或 `{ success: boolean }` (API Key)
+- 撤销授权: `DELETE /integration/{platform}/auth` · body: `{ appId: number }`
+
+**错误处理:**
+- 字段为空提交: 表单 inline 校验，阻止提交
+- 授权请求失败: `message.error('授权失败，请重试')`
+- Revoke 失败: `message.error` + 关闭 loading，不关闭弹窗
+
+### Feature Settings Section
+
+{For each feasible feature (✅ or ⚠️), one subsection:}
+
+#### 工单 AI 回复 (if feasible)
+
+**授权前状态:** disabled mask 遮罩整个 Section
+
+**Agent 选择:**
+- 接口: `GET /integration/{platform}/agents` · response: `[{ id: number, name: string }]`
+- 必选，未选时保存阻断并显示错误提示
+
+**处理范围:**
+- GLOBAL / SINGLE；SINGLE 时展开 View/Queue 多选列表
+- 接口: `GET /integration/{platform}/views` · response: `[{ id: number, name: string }]`
+
+**保存接口:** `POST /integration/{platform}/settings` · body: `{ agentId, rule: { scope, views? } }`
+
+#### Livechat (if feasible)
+
+{类似结构，列出 Livechat 配置字段、接口、校验规则}
+
+#### 数据同步 (if feasible)
+
+{类似结构，列出同步配置字段、接口、校验规则}
+
+### Manual Guidance Section (if any manual steps)
+
+**Webhook URL 展示:**
+- 接口: `GET /integration/{platform}/webhook-url` · response: `{ url: string }`
+- 组件: 只读 Input + "复制" 按钮（`navigator.clipboard.writeText`）
+- 提示文案: "请前往 {Platform} 管理后台 → Webhooks → 新建，填入以下 URL"
+
+{其他手工步骤的组件和文案规格}
 ```
 
 ---
@@ -613,6 +675,34 @@ Role → file mapping:
 ## 依赖与前置条件
 
 - {External API docs, credentials, Marketplace App approval if needed}
+
+## 前端集成规格
+
+（从 Phase D 前端集成评估生成，格式与标准模式 spec.md 前端规格相同）
+
+### Auth Section
+
+**授权方式:** {从 Phase D AUTH SECTION 推导}
+
+**输入字段:**
+
+| 字段名 | 类型 | 必填 | 校验规则 | placeholder |
+|--------|------|------|---------|-------------|
+| {从 Phase D AUTH SECTION 推导} | | | | |
+
+**状态机:** unauthenticated → authenticating → authenticated → revoking → unauthenticated
+
+**接口:** `POST /integration/{platform}/auth` · `DELETE /integration/{platform}/auth`
+
+**错误处理:** 同标准模式 spec.md 前端规格
+
+### Feature Settings Section
+
+{从 Phase D FEATURE SETTINGS SECTION 推导，每涉及我方配置的 Step 一个子 section，格式同标准模式}
+
+### Manual Guidance Section
+
+{从 Phase D MANUAL GUIDANCE 推导；若"— 无手工步骤"则省略本小节}
 ```
 
 对话展示规则与标准模式相同（角色对应文档完整展示，其余给路径）。
