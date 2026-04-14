@@ -303,6 +303,34 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - [ ] 实现 `ISyncService` 商品同步（{if product sync feasible}）
 - [ ] 实现物流数据同步（{if logistics feasible}）
 - [ ] Rate limit 处理: {strategy}
+
+### 前端集成开发说明
+
+**Auth Section**
+
+| 字段 | 类型 | 必填 | 用途 |
+|------|------|------|------|
+| {字段名，从 Feature 4 AUTH SECTION 推导} | Input / Input.Password | ✅/— | {用途} |
+
+授权接口: `POST /integration/{platform}/auth`
+- OAuth: 返回 `{ auth_url: string }`，调用 `window.open(auth_url)` 跳转
+- API Key: 返回 `{ success: boolean }`，无跳转
+
+已授权状态: 表单折叠 + Revoke 按钮（`DELETE /integration/{platform}/auth`）
+
+**Feature Settings Section**
+
+- **工单 AI 回复** (if feasible):
+  - Agent 下拉: `GET /integration/{platform}/agents` → `[{id, name}]`
+  - 处理范围 GLOBAL/SINGLE；SINGLE 时展开 View/Queue 多选列表 (`GET /integration/{platform}/views`)
+  - 授权前 disabled mask 遮罩整个 Section
+- **Livechat** (if feasible): {描述 Livechat 配置 UI，如 credential 输入字段}
+- **数据同步** (if feasible): {描述同步范围选择等}
+
+**Manual Guidance Section** (if any manual steps)
+
+- Webhook URL: 从接口获取 (`GET /integration/{platform}/webhook-url`)，展示 + 一键复制
+- 提示文案: "请在 {Platform} 后台 → Webhooks 填入以下地址"
 ```
 
 ---
@@ -525,6 +553,27 @@ Role → file mapping:
 
 {If ❌ 阻断:}
 **阻断原因：** {技术限制说明，引用文档证据}
+
+## 前端集成开发说明
+
+（从 Phase D 前端集成评估生成）
+
+**Auth Section**
+
+| 字段 | 类型 | 必填 | 用途 |
+|------|------|------|------|
+| {从 Phase D AUTH SECTION 推导} | | | |
+
+授权接口: `POST /integration/{platform}/auth`
+已授权状态: 表单折叠 + Revoke 按钮（`DELETE /integration/{platform}/auth`）
+
+**Feature Settings Section**
+
+{从 Phase D FEATURE SETTINGS SECTION 推导，每功能一条}
+
+**Manual Guidance Section**
+
+{从 Phase D MANUAL GUIDANCE 推导；若"— 无手工步骤"则省略本小节}
 ```
 
 **`spec.md`（链路模式）**：
