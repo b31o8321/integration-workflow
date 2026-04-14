@@ -184,6 +184,19 @@ Generate all four documents. Fill every section with real analysis — no placeh
 
 {Implementation order constraints:}
 - {Module A} 必须先于 {Module B} 实现，原因：{one sentence}
+
+## 前端集成
+
+**授权模式:** {从 check-api Feature 0 + Feature 4 AUTH SECTION 推导: 如 "OAuth2（收集子域名 → 跳转 → 回调写入 ExternKey）" / "API Key（前端收集并存入 ExternKey.secretKey）"}
+
+**凭证流向:** {从前端输入字段 → 后端 ExternKey 存储的路径，一句话}
+
+**Drawer 结构:**
+- **Auth Section:** {输入字段说明 + 授权动作 + 已授权/已撤销状态描述}
+- **Feature Settings Section:** {各功能配置项说明，功能间独立}
+- **Manual Guidance:** {需展示的手工操作，如 Webhook URL 展示+复制；若无则写"无"}
+
+**Webhook URL 路径格式（若适用）:** `/v2/webhook/{PLATFORM_ID}/{token}`
 ```
 
 ---
@@ -466,6 +479,16 @@ Role → file mapping:
 ## 依赖关系
 
 - {Step A} 必须先于 {Step B} 实施，原因：{one sentence}
+
+## 前端集成
+
+**授权模式:** {从 Phase D AUTH SECTION 推导}
+**凭证流向:** {输入字段 → ExternKey 存储路径}
+
+**Drawer 结构:**
+- **Auth Section:** {字段 + 动作 + 状态}
+- **Feature Settings Section:** {功能配置项，来自 Phase D FEATURE SETTINGS}
+- **Manual Guidance:** {来自 Phase D MANUAL GUIDANCE，或"无"}
 ```
 
 **`dev.md`（链路模式）**：
