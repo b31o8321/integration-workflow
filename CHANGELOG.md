@@ -4,6 +4,14 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.6.1] - 2026-04-14
+
+### Changed
+- **`intelli:retrospective` 双模式**：新增 Mode B（通用功能复盘），用于非集成项目的功能开发；Mode A 改名为集成项目复盘；Input 增加模式选择步骤
+- **`shulex-intelli/CLAUDE.md` 复盘规则**：从"集成项目强制运行"改为"所有功能分支完成后询问"，区分集成 vs 通用两种复盘路径
+
+---
+
 ## [2.6.0] - 2026-04-14
 
 ### Added

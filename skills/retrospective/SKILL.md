@@ -1,41 +1,54 @@
 ---
 name: retrospective
-description: Post-integration retrospective. Reviews what was just built, updates the knowledge base and skill files with any gaps or corrections found, and bumps the plugin version. Run after each integration project branch completes.
-version: 1.0.0
+description: Post-development retrospective. Two modes — integration project (updates plugin knowledge base and skill files) or general feature work (updates CLAUDE.md and project docs with architecture conventions and lessons learned). Run after finishing any significant development branch.
+version: 1.1.0
 ---
 
-# intelli:retrospective — Post-Integration Retrospective
+# intelli:retrospective — Post-Development Retrospective
 
 ## Purpose
 
-集成项目开发完成后，进行结构化复盘：
+开发分支完成后，进行结构化复盘。根据开发内容自动选择复盘模式：
 
+**模式 A：集成项目复盘**（新接入平台 / 现有集成改造）
 1. 更新 `knowledge-base/intelli-capabilities.md`（新平台、新发现）
 2. 修正集成分析 Skill 中的知识错误或流程空缺
 3. 提炼并确认本次发现的架构约定
 4. 更新 `shulex-intelli/CLAUDE.md`（如有新的架构规则）
 5. Bump 插件版本（如有 Skill 或知识库变更）
 
+**模式 B：通用功能复盘**（非集成项目的新功能 / 架构改造）
+1. 总结本次发现的架构约定、坑点、决策
+2. 更新 `shulex-intelli/CLAUDE.md` 或 `docs/CLAUDE_ONBOARDING.md`
+3. 如影响集成分析（如新的 SPI 方法、新的引擎能力），同步更新知识库
+
 ## 触发时机
 
-- **`superpowers:finishing-a-development-branch` 执行完成之后**，由 Claude 主动发起
-- 或用户手动执行 `/intelli:retrospective`
+- **`superpowers:finishing-a-development-branch` 执行完成之后**，由 Claude 主动询问
+- 用户手动执行 `/intelli:retrospective`
 
-## Input
+## Input & Mode Selection
 
-优先从当前会话上下文读取；如在新会话中运行，询问：
+优先从当前会话上下文判断；无法判断时询问：
 
 ```
-请告知本次集成项目信息：
+本次开发是集成项目（新平台接入 / 现有集成改造）还是其他功能？
 
+→ A. 集成项目
+→ B. 其他功能
+```
+
+---
+
+## Mode A: 集成项目复盘
+
+需要以下信息（从上下文读取，或询问）：
+
+```
 1. 平台名称: {e.g. LiveAgent}
 2. 实现的功能: {Ticket AI 回复 / Livechat / 数据同步 / 前端接入页，可多选}
 3. 开发过程中遇到的偏差或纠正点: {描述；若无则填"无"}
 ```
-
-## Retrospective Flow
-
-### Step 1: 知识库同步（intelli-capabilities.md）
 
 读取 `knowledge-base/intelli-capabilities.md`，逐项核对：
 
@@ -121,15 +134,59 @@ git push
 
 ---
 
+## Mode B: 通用功能复盘
+
+需要以下信息（从上下文读取，或询问）：
+
+```
+1. 本次开发的功能简述: {e.g. 重构 ChannelAuth 凭证模式}
+2. 开发中遇到的坑点或决策点: {描述；若无则填"无"}
+3. 是否影响集成分析流程或系统能力描述？{是/否}
+```
+
+### Step B1: 架构约定与坑点总结
+
+整理本次开发中发现的以下类别信息：
+
+- **架构决策**：选了某方案而非另一方案，为什么？
+- **坑点 / 陷阱**：踩过的坑，避免未来重踏
+- **新的代码约定**：e.g. 某类实现必须用某种方式
+- **文档与代码不一致**：发现的错误或过时描述
+
+### Step B2: 更新 shulex-intelli 项目文档
+
+根据 B1 整理的内容，更新以下文件（按需）：
+
+| 文件 | 适用内容 |
+|------|---------|
+| `CLAUDE.md` | 架构决策、代码约定、必须注意的规则 |
+| `docs/CLAUDE_ONBOARDING.md` | 新人上手相关、模块说明、运行方式 |
+| 相关模块 README | 若涉及特定模块的使用方式变化 |
+
+**只更新有实际内容写入的地方，不增加空洞的章节。**
+
+### Step B3: 如影响集成分析，同步更新插件
+
+若本次开发新增了 SPI 方法、新的引擎能力、或修改了已有能力的行为：
+- 更新 `knowledge-base/intelli-capabilities.md`
+- Bump 插件版本（patch）
+- Commit 并 push
+
+若无影响 → 跳过，无需 bump 插件版本
+
+---
+
 ## Output Format
 
 复盘完成后输出：
 
 ```
-复盘完成：{Platform Name} 集成
+复盘完成：{功能/平台描述}
 
+模式: {A 集成项目 / B 通用功能}
 知识库更新: {更新了 X 项 / 无需更新}
-Skill 更新: {更新了 X 个文件 / 无需更新}
+Skill 更新: {更新了 X 个文件 / 无需更新}（仅 Mode A）
+文档更新:   {更新了 X 个文件 / 无需更新}（仅 Mode B）
 架构约定:   {提炼了 X 条 / 无新约定}
 插件版本:   {已 bump 至 X.X.X / 无变化}
 
