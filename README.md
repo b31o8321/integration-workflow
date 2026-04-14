@@ -114,9 +114,19 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}/
 | `intelli:analyze` | 平台分析入口（标准模式 + 链路模式） |
 | `intelli:flow-analyze` | 业务链路验证（Phase A/B/C + 链路报告） |
 | `intelli:check-api` | API 能力矩阵分析（工单/Livechat/数据同步/前端集成四维度） |
-| `intelli:map-arch` | 映射到 Intelli 接口规范 |
-| `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec），按角色展示对应文档 |
+| `intelli:map-arch` | 映射到 Intelli 接口规范（含 ChannelAuth 凭证模式判断） |
+| `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec）；spec.md 含 E2E 验收 Checklist |
 | `intelli:update-kb` | 分析代码库，更新系统能力知识库 |
+
+## 集成验收要求
+
+> spec.md 中的验收标准分两个层次，**两层都通过才算交付**：
+
+| 层次 | 内容 | 时机 |
+|------|------|------|
+| 单元测试 | `XxxTicketPluginTest`（无凭证，测纯逻辑） | CI 自动执行，代码合并前 |
+| API 连通性 | `XxxClientTest`（去掉 `@Ignore`，填真实凭证） | 手动执行，代码合并前 |
+| E2E 端对端 | 完整链路：三方事件 → Intelli → AI 回复出现在三方 UI | staging 环境手动执行，上线前 |
 
 ## 版本管理（维护者必读）
 

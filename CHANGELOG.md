@@ -4,6 +4,22 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.5.0] - 2026-04-14
+
+### Changed
+- **`intelli:report` spec.md 验收标准**：从单行描述改为两层结构——自动化测试（单元测试 checklist）+ E2E 端对端测试（手动执行 checklist，含前置配置、API连通性、完整链路验证）；集成项目必须完成 E2E 测试方可视为交付
+- **`intelli:map-arch` 枚举注册行**：从 `ExternKeySourceEnum`（已废弃）改为 `ChannelTypeEnum`，注明新平台必须覆盖 `resolveCredential()` + `resolveCredentialByKey()`，参考 `LineTicketPlugin`
+
+### Added
+- **`intelli-capabilities.md` 凭证模式对比表**：新增 ChannelAuth vs ExternKey 对比，ChannelAuth 标为新平台标准，ExternKey 标为遗留；含新平台接入 Checklist（凭证相关）
+- **`intelli-capabilities.md` 集成验收要求**：新增 E2E 验收三层次说明（单元测试 / API连通性 / E2E端对端）及工单 AI 回复 E2E Checklist
+- **`README.md`** 新增集成验收要求一节，说明两层验收标准
+
+### Docs
+- `intelli-capabilities.md` SPI 表：`resolveCredential()` 和 `resolveCredentialByKey()` 从"可选覆盖"改为"新平台必须覆盖"
+
+---
+
 ## [2.4.0] - 2026-04-14
 
 ### Added

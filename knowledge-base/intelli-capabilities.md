@@ -204,3 +204,32 @@ Livechat 会话结束后，将对话记录同步写入三方工单系统。
 | Tars（内部） | ✅ | `TarsVoiceTicketSyncHandler` |
 | Zendesk | ✅ | `ZendeskVoiceTicketSyncHandler` |
 | Freshdesk | ✅ | 已注册，handler 存在 |
+
+---
+
+## 集成验收要求
+
+> 适用于所有新接入平台。单元测试 + 代码 Review 不构成完整验收，**必须完成 E2E 测试后方可视为交付**。
+
+### 验收层次
+
+| 层次 | 内容 | 时机 |
+|------|------|------|
+| 单元测试 | `XxxTicketPluginTest`（无凭证，测 parseWebhook / lockKey 等纯逻辑） | 代码合并前，CI 自动执行 |
+| API 连通性测试 | `XxxClientTest`（去掉 `@Ignore`，填入真实凭证），确认 CRUD 操作可达 | 代码合并前，需真实账号手动执行 |
+| E2E 端对端测试 | 完整链路：触发三方事件 → Intelli 处理 → AI 回复出现在三方平台 UI | 上线前，在 staging 环境手动执行 |
+
+### 工单 AI 回复 E2E Checklist
+
+- [ ] 在 Intelli 前端完成授权，获取 webhook URL
+- [ ] 在三方平台配置 webhook URL（或手动创建 Rule/Trigger），指向 staging 环境
+- [ ] `XxxClientTest.testCredentials()` 返回 true
+- [ ] `XxxClientTest.testGetMessages()` 能拉取测试工单的消息
+- [ ] `XxxClientTest.testSendReply()` 回复在三方平台界面可见
+- [ ] `XxxClientTest.testAddTag()` 标签在三方平台界面可见
+- [ ] 创建真实工单 → AI 回复出现在工单中 → `shulex_ai_replied` 标签被打上
+
+### 注意事项
+
+- `XxxClientTest` 中的 `@Ignore` 仅防止 CI 误触，E2E 时必须去掉并填入真实凭证
+- E2E 测试账号应与生产账号隔离，使用专用 test ticket 避免影响真实数据

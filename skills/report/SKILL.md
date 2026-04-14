@@ -377,15 +377,49 @@ Generate all four documents. Fill every section with real analysis — no placeh
 
 ## 验收标准
 
-{For each feasible feature (✅ or ⚠️), include the corresponding line:}
-- **工单AI回复**: Webhook 能解析并创建工单；`sendReply()` 能成功发送回复；签名验证通过
-- **Livechat对接**: 消息能实时接收并路由到 AI；outbound 消息能送达；session 生命周期正确维护
-- **数据同步**: 增量同步无漏单；分页正确处理；rate limit 不触发 429
+> 集成项目大量依赖三方，单元测试和代码 Review 不构成完整验收。**必须完成 E2E 端对端测试后方可视为交付。**
+
+### 自动化测试（代码合并前必须通过）
+
+{For each feasible feature (✅ or ⚠️), include the corresponding lines:}
+
+**工单AI回复（单元测试）:**
+- [ ] `XxxTicketPluginTest.parseWebhook_success()` — webhook 解析正常
+- [ ] `XxxTicketPluginTest.parseWebhook_missingTicketId_skips()` — 缺字段时跳过
+- [ ] `XxxTicketPluginTest.parseWebhook_malformedJson_skips()` — 非法 JSON 跳过
+- [ ] `XxxTicketPluginTest.extractCredentialKey()` — 凭证 key 提取正确
+- [ ] `XxxTicketPluginTest.lockKey()` — 锁 key 格式正确
+
+### E2E 端对端测试（上线前必须手动执行）
+
+> 需要：真实 {Platform} 测试账号 + 可公网访问的 Intelli 测试环境（如 staging）
+
+{For each feasible feature (✅ or ⚠️), include the corresponding section:}
+
+**工单AI回复 E2E:**
+- [ ] **前置**：在 Intelli 前端完成授权，获取 webhook URL
+- [ ] **前置**：在 {Platform} 后台配置 webhook URL，指向测试环境
+- [ ] **API连通性**：运行 `XxxClientTest`（去掉 `@Ignore`，填入真实凭证），确认 `testCredentials()` 返回 true
+- [ ] **消息读取**：`testGetMessages()` 能拉取到测试工单的消息
+- [ ] **发送回复**：`testSendReply()` 能向测试工单写入回复，并在 {Platform} 界面中可见
+- [ ] **打标签**：`testAddTag()` 能给测试工单打标签，并在 {Platform} 界面中可见
+- [ ] **完整链路**：在 {Platform} 创建一条真实工单，确认：
+  - Intelli webhook 收到推送（查 staging 日志）
+  - AI 回复在 {Platform} 工单中出现
+  - `shulex_ai_replied` 标签被打上
+
+**Livechat E2E（如适用）:**
+- [ ] 发送真实消息，AI 响应出现在对话中
+- [ ] 转人工场景：`transfer_to_agent` 标签正确打上
+
+**数据同步 E2E（如适用）:**
+- [ ] 增量拉取返回最近 N 条订单，无重复、无漏拉
+- [ ] 模拟 rate limit：429 后自动重试成功
 
 ## 依赖
 
 - 第三方 API 文档: {URL}
-- 需要的凭据/权限: {list}
+- 需要的凭据/权限: {list}（单元测试用 `@Ignore` 占位，E2E 时填入真实值）
 {Only include if authorization model is MARKETPLACE_APP or CONDITIONAL:}
 - 🚨 前置条件: 需完成 Marketplace App 申请，申请入口: {URL}
 
@@ -669,8 +703,22 @@ Role → file mapping:
 
 ## 验收标准
 
+> 集成项目大量依赖三方，单元测试和代码 Review 不构成完整验收。**必须完成 E2E 端对端测试后方可视为交付。**
+
+### 自动化测试（代码合并前）
+
 {For each ✅/⚠️ Step:}
-- **Step {N}**: {completion definition}
+- **Step {N}**: {具体单元测试通过条件}
+
+### E2E 端对端测试（上线前必须手动执行）
+
+> 需要：真实测试账号 + 可公网访问的 Intelli 测试环境（如 staging）
+
+{For each ✅/⚠️ Step:}
+- **Step {N} E2E**:
+  - [ ] {前置配置步骤，如 "在平台后台配置 webhook URL"}
+  - [ ] {API连通性验证，如 "运行 XxxClientTest，去掉 @Ignore，确认 testCredentials() 返回 true"}
+  - [ ] {完整链路验证，如 "创建真实工单，确认 AI 回复出现在平台 UI 中"}
 
 ## 依赖与前置条件
 
