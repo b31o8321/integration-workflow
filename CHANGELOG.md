@@ -4,6 +4,18 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.10.0] - 2026-04-15
+
+### Changed
+- **`knowledge-base/intelli-capabilities.md` 新平台接入约定补全**（来自 LiveAgent 集成复盘，7 个测试问题的系统性修复）：
+  - **插件注册第 3 处**：新增 `shulex-intelli-api/pom.xml` `<dependencies>` 为必须步骤（共 3 处，缺此项导致 `unsupported platform` 错误，之前文档只记录了 2 处）
+  - **Webhook URL gateway 前缀约定**：对外展示的 URL 必须含 `/api_v2/intelli` 前缀，附参考 LINE 实现；后端路由本身无此前缀，gateway 转发时剥除
+  - **`getSetting()` 必须含 `authed` 布尔字段**：前端依赖此字段判断授权状态，不能仅靠字段非空判断；未授权时返回 `authed=false` 的对象（不能返回 null）
+  - **`DELETE /auth` 必须实现专用端点**：ChannelAuth 模式平台不得复用通用 `cancelChannel`（`DELETE /api_v2/intelli/channel`），后者只走 ExternKey 表，调用会抛 `No enum constant ExternKeySourceEnum.{PLATFORM}`
+  - **所有 Controller 端点必须包 `ResponseResult<T>`**：遗漏时前端拦截器剥层后 `res?.data` 为 `undefined`；`useRequest` 需配 `formatResult: (res) => res?.data`
+
+---
+
 ## [2.9.0] - 2026-04-14
 
 ### Changed

@@ -271,7 +271,7 @@ src/
 
 ```
 POST   /api_v2/intelli/{platform}/auth          ← 授权（创建/更新 ChannelAuth）
-DELETE /api_v2/intelli/{platform}/auth          ← 撤销授权
+DELETE /api_v2/intelli/{platform}/auth          ← 撤销授权（不可用 cancelChannel 通用接口，后者走 ExternKey 表）
 GET    /api_v2/intelli/{platform}/agents        ← 获取 Agent 列表
 GET    /api_v2/intelli/{platform}/setting       ← 读取配置
 POST   /api_v2/intelli/{platform}/setting       ← 保存配置
@@ -280,7 +280,58 @@ GET    /api_v2/intelli/{platform}/webhook-url   ← 获取 Webhook URL（+ body 
 
 `{platform}` 为小写，如 `liveagent`。
 
-### 参考实现
+> ⚠️ **撤销授权必须实现专用 `DELETE /auth` 端点**，不能复用 `cancelChannel`（`DELETE /api_v2/intelli/channel`）。`cancelChannel` 内部走 ExternKey 表，而新平台用 ChannelAuthDO，会抛 `No enum constant ExternKeySourceEnum.{PLATFORM}` 异常。
+
+### `getSetting()` 响应必须包含 `authed` 布尔字段
+
+前端依赖 `setting.authed` 判断是否已授权。**不能**仅靠字段非空来判断，因为未授权时接口也会返回 200（含空对象）。
+
+```java
+// 标准 SettingResponse 结构
+@Data
+public static class SettingResponse {
+    private boolean authed;   // ← 必须有此字段，未授权时为 false
+    private String domain;
+    private String agentId;
+}
+
+// 未授权时
+return ResponseResult.success(new SettingResponse()); // authed=false
+
+// 已授权时
+response.setAuthed(true);
+response.setDomain(channelAuth.getAppKey());
+```
+
+### 所有 Controller 端点必须包 `ResponseResult<T>`
+
+LiveAgent 集成初版遗漏了 `ResponseResult` 包装，导致前端 `res?.data` 为 `undefined`。
+
+```java
+// 正确 ✅
+public ResponseResult<SettingResponse> getSetting() { ... }
+
+// 错误 ❌（会导致前端 res?.data 为 undefined）
+public SettingResponse getSetting() { ... }
+```
+
+前端拦截器会自动剥离 `ResponseResult` 外层，组件收到的是 `data` 字段内容。使用 `useRequest` 时如需手动提取，配置 `formatResult: (res) => res?.data`。
+
+### Webhook URL 构建（含 gateway 前缀）
+
+外部 Webhook URL 需加 `/api_v2/intelli` gateway 前缀：
+
+```java
+// 正确 ✅
+String webhookUrl = webhookBaseUrl + "/api_v2/intelli/v2/webhook/LIVEAGENT/" + token;
+
+// 错误 ❌（缺少 gateway 前缀，LiveAgent Rules 会打到 404）
+String webhookUrl = webhookBaseUrl + "/v2/webhook/LIVEAGENT/" + token;
+```
+
+后端服务本身只暴露 `/v2/webhook/{platform}/{token}`，gateway 在转发时会剥除 `/api_v2/intelli` 前缀。对外展示的 URL（如 `webhook-url` 接口返回值、前端引导文案）必须带完整前缀。
+
+参考 LINE 的实现：`baseUrl.replaceFirst("/line$", "") + "/v2/webhook/LINE/" + xToken`，其中 `baseUrl` 形如 `https://desk-staging.shulex.com/api_v2/intelli/line`。
 
 | 授权模式 | 参考实现 | 说明 |
 |---------|---------|------|
@@ -366,6 +417,18 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 ```
 
 > ⚠️ 这两处都不会报编译错误，但缺少任一项，Plugin 不会被 Spring 加载。
+
+**3. `shulex-intelli-api/pom.xml` 的 `<dependencies>` 块**（最容易遗漏）
+
+```xml
+<dependency>
+    <groupId>com.shulex</groupId>
+    <artifactId>intelli-ticket-{platform}</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+> ⚠️ 缺少此依赖时，Plugin JAR 不在 api 模块 classpath 中，`spring.factories` 永远不会被扫描，启动日志看不到 `Registered ticket platform plugin: {PLATFORM}`，webhook 请求返回 `unsupported platform`。这是 LiveAgent 集成测试时遇到的第一个问题（2026-04-15）。
 
 ---
 
