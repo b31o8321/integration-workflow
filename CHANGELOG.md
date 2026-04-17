@@ -4,6 +4,14 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.16.0] - 2026-04-17
+
+### Changed
+- **`knowledge-base/intelli-capabilities.md` 新平台接入 Checklist 新增两条规则**：① `platformId()` 必须等于 `ExternKeySourceEnum.{PLATFORM}.name()`，不一致时 Tars callback `hasPlatform()` 返回 false，路由到 V1 路径，抛"原始工单信息不存在"；② `auth()` 保存时必须自动填充 botId（调用 `gptBotFeign.getBots(xToken)` 取第一个），否则 `AiReplyNode` 看到 `botId=null` 静默跳过 AI 回复，无任何 ERROR 日志。来源：LiveAgent 集成测试两个连续沉默失败。
+- **`skills/report/SKILL.md` `platformId()` checklist 项增强**：明确要求返回值必须等于 `ExternKeySourceEnum.{PLATFORM}.name()`，不能自定义字符串格式。
+
+---
+
 ## [2.15.0] - 2026-04-17
 
 ### Added

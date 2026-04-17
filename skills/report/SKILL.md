@@ -270,7 +270,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - [ ] `ChannelTypeEnum` 中注册新平台枚举值（value 须与 Tars ChannelAuthTypeEnum 的 value 一致）
 - [ ] 创建 Maven 子模块 `intelli-ticket-{platform}`
 - [ ] 实现 `TicketPlatformPlugin`
-  - [ ] `platformId()` 与 ChannelTypeEnum 一致
+  - [ ] **`platformId()` 必须 = `ExternKeySourceEnum.{PLATFORM}.name()`**（如枚举名为 `LIVE_AGENT`，则 `platformId()` 返回 `"LIVE_AGENT"`，不能写 `"LIVEAGENT"`）。不一致时 Tars callback `hasPlatform()` 返回 false，路由到 V1 路径，抛 `"原始工单信息不存在"`
   - [ ] `extractCredentialKey()` 从 URL token 提取
   - [ ] `parseWebhook()` 解析 webhook payload + 签名验证
   - [ ] `resolveCredential()` 覆盖，使用 ChannelAuth 模式（参考 LineTicketPlugin）

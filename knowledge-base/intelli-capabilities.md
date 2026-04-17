@@ -20,6 +20,8 @@
 - [ ] `XxxTicketAutoConfiguration` 注入 `IChannelAuthRepository` + `ApiKeyService`
 - [ ] Controller 使用 `IChannelAuthRepository` 存储 ChannelAuthDO
 - [ ] **`XxxTicketPlugin` 覆盖 `buildTicketConfig()`**（ChannelAuth 平台必须）：`tarsChannelId = channelAuth.getId()`，`touchPoint = ChannelTypeEnum.XXX.getValue()`，并将 metadata 字段手动映射到 `TicketConfig`。不覆盖则引擎用 JSON 直接解析 metadata 为 `TicketConfig`，但 `TicketMetadata.channelId` ≠ `TicketConfig.tarsChannelId`（字段名不同），导致 `tarsChannelId = null`，Tars 报 `channelId is required`。参考 `LineTicketPlugin.buildTicketConfig()`
+- [ ] **`platformId()` 必须 = `ExternKeySourceEnum.{PLATFORM}.name()`**（如 `ExternKeySourceEnum.LIVE_AGENT` → `"LIVE_AGENT"`，不能写 `"LIVEAGENT"`）。不一致时 Tars callback 会路由到 V1 路径，抛 `"原始工单信息不存在"`。
+- [ ] **`auth()` 保存时自动填充 botId**：调用 `gptBotFeign.getBots(xToken)`，取 `bots.get(0).getId()` 写入 metadata。不填则 Tars `AiReplyNode` 看到 `botId=null`，`context=false`，静默跳过 AI 回复，无任何 ERROR 日志。
 
 ### TicketPlatformPlugin 接口
 
