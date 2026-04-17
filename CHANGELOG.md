@@ -4,6 +4,15 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.11.0] - 2026-04-17
+
+### Added
+- **`knowledge-base/intelli-capabilities.md` Tars AI 回复架构**：新增独立章节，记录 Intelli-Tars 整体数据流、bizType 两大类型（邮件型 vs Inbox 型）、新平台在 Tars 的 5 项注册要求，以及 `FindExistTicketExtPt` 时间窗口合并 vs externalId 精确匹配两种模式对比
+- **`skills/analyze/SKILL.md` 代码库检查扩展**：进入实现阶段前的 `/add-dir` 提示新增 `tars`（工单 AI 回复必须），brainstorming context block 新增 Tars 关键约定（bizType 类型选择、FindExistTicketExtPt 差异、ChannelAuthTypeEnum value 一致性要求）
+- **`skills/report/SKILL.md` 工单AI回复 Checklist 重写**：分为 Intelli 和 Tars 两部分；Intelli 侧修正枚举为 `ChannelTypeEnum`（原为过时的 `ExternKeySourceEnum`），补全 `resolveCredential()` / `resolveCredentialByKey()` 覆盖项；Tars 侧新增 7 项完整注册 checklist（BizConstants / BizScenarioFactory / 全套扩展点）
+
+---
+
 ## [2.10.0] - 2026-04-15
 
 ### Changed

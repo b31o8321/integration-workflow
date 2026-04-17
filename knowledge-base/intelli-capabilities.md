@@ -1,6 +1,6 @@
 # Intelli 系统能力
 
-> 最后更新: 2026-04-14（新增：前端集成约定、Maven 子模块约定、测试规范）
+> 最后更新: 2026-04-17（新增：Tars AI 回复架构约定）
 
 ## TicketEngine V2 SPI
 
@@ -182,6 +182,76 @@
 |------|------|
 | 动态 API 调用 | `CustomApiClient` — 用户自定义 API 端点，由 Intelli 代理调用 |
 | 低层 HTTP 客户端 | `ApiHttpClient` — 底层出站 HTTP，供自定义集成使用 |
+
+---
+
+## Tars AI 回复架构
+
+Intelli 通过调用 Tars（独立服务）生成 AI 回复，再由 Tars 回调 Intelli 完成投递。
+
+### 整体数据流
+
+```
+三方平台 webhook
+    ↓
+Intelli WebhookDispatchController
+    ↓
+TicketEngine V2（TicketPlatformPlugin → TicketOperations）
+    ↓
+Tars API（创建工单 + 异步 AI 处理）
+    ↓
+Tars botReplyCallbackApiFeign.botReplyCallback()
+    ↓
+Intelli TicketOperations.sendReply()（实际投递）
+```
+
+### Tars bizType 两大类型
+
+| 类型 | 适用平台 | 回复投递方式 | 扩展点基类 |
+|------|---------|-----------|----------|
+| **邮件型** | Email / Amazon / Shopify / Walmart 等 | Tars 直接发 SMTP/SES 邮件 | `AbstractEmailDeliveryResponseExtPt` |
+| **Inbox 型** | LINE / TikTok / LiveAgent 等 | Tars 回调 Intelli，Intelli 调平台 API | `AbstractInboxDeliveryResponseExtPt` |
+
+**新接入的 Ticket 类帮助台平台（如 LiveAgent）应使用 Inbox 型**。
+
+### 新平台在 Tars 的注册要求
+
+1. **`ChannelAuthTypeEnum` 新增枚举值**  
+   `value` 必须与 Intelli `ChannelTypeEnum` 的值完全一致（如 Intelli 是 `"live_agent"`，Tars 也必须是 `"live_agent"`）
+
+2. **新建 `{Platform}BizConstants`**  
+   `BIZ_ID_XXX = "{platform}"` （小写，与 ChannelTypeEnum value 一致）
+
+3. **`BizScenarioFactory.createByTicket()` 新增路由 case**  
+   ```java
+   case LIVEAGENT:
+       bizType = {Platform}BizConstants.BIZ_ID_XXX;
+       break;
+   ```
+
+4. **Create 阶段扩展点**（参考 LINE，继承 `AbstractInbox*` 基类）：
+   - `FindChannelAuthExtPt` / `FindOrCreateCustomerExtPt` / `BuildMessageExtPt`
+   - `SubjectExtPt` / `CheckCanCreateExtPt` / `NewOrReopenTicketExtPt` / `SaveDataExtPt`
+   - `FindExistTicketExtPt` — **必须按 externalId 精确匹配**，不使用时间窗口合并
+     （LINE 使用的 `AbstractSettingMergeFindExistTicketExtPt` 按客户+时间窗口合并，不适合有明确 ticketId 的帮助台平台）
+
+5. **Reply 阶段扩展点**（最关键）：
+   ```java
+   @Extension(bizId = "{platform}", useCase = USE_CASE_TICKET_REPLY)
+   public class {Platform}DeliveryResponseExtPt extends AbstractInboxDeliveryResponseExtPt {
+       @Override
+       public ExternKeySourceEnum getExternKeySource() {
+           return ExternKeySourceEnum.{PLATFORM};  // 告诉 Tars 回调 Intelli 哪个处理器
+       }
+   }
+   ```
+
+### FindExistTicketExtPt 的两种模式对比
+
+| 模式 | 基类 | 适用场景 | 匹配逻辑 |
+|------|------|---------|---------|
+| 时间窗口合并 | `AbstractSettingMergeFindExistTicketExtPt` | LINE（无持久 ticketId） | 同客户 + 同渠道 + 最近 N 天 |
+| 精确匹配 | 直接实现 `FindExistTicketExtPt` | 帮助台平台（有 ticketId） | `ticketQueryService.findByExternalId(accountId, externalId)` |
 
 ---
 

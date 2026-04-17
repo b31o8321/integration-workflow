@@ -266,13 +266,16 @@ Generate all four documents. Fill every section with real analysis — no placeh
 ### 工单AI回复接入 Checklist
 {Only include this section if 工单AI回复 is ✅ or ⚠️}
 
-- [ ] `ExternKeySourceEnum` 中注册新平台枚举
+**Intelli（shulex-intelli）：**
+- [ ] `ChannelTypeEnum` 中注册新平台枚举值（value 须与 Tars ChannelAuthTypeEnum 的 value 一致）
 - [ ] 创建 Maven 子模块 `intelli-ticket-{platform}`
 - [ ] 实现 `TicketPlatformPlugin`
-  - [ ] `platformId()` 与 ExternKeySourceEnum 一致
+  - [ ] `platformId()` 与 ChannelTypeEnum 一致
   - [ ] `extractCredentialKey()` 从 URL token 提取
   - [ ] `parseWebhook()` 解析 webhook payload + 签名验证
-  - [ ] `createOperations()` 创建 ExternKey
+  - [ ] `resolveCredential()` 覆盖，使用 ChannelAuth 模式（参考 LineTicketPlugin）
+  - [ ] `resolveCredentialByKey()` 覆盖，使用 ChannelAuth 模式
+  - [ ] `createOperations()` 创建 ChannelAuthCredential
   - [ ] `parsePlatformConfig()` 解析平台特有配置
 - [ ] 实现 `TicketOperations`
   - [ ] `getMessages()` — 接口: {platform API endpoint}
@@ -281,9 +284,24 @@ Generate all four documents. Fill every section with real analysis — no placeh
   - [ ] `sendReply()` — 接口: {platform API endpoint}
   - [ ] `applyTags()` — 接口: {platform API endpoint} {note any workaround}
   - [ ] `lockKey()` 包含 tenantId + 工单ID
-- [ ] 创建 `AutoConfiguration` 并注册
-- [ ] 配置 `intelli.ticket.v2.enabled=true`
+- [ ] 创建 `AutoConfiguration` 并注册 spring.factories
 - [ ] 配置 webhook URL: `/v2/webhook/{PLATFORM_ID}/{token}`
+
+**Tars（工单 AI 回复必须）：**
+- [ ] `ChannelAuthTypeEnum` 新增枚举值（value 与 Intelli ChannelTypeEnum 一致）
+- [ ] 新建 `{Platform}BizConstants`（BIZ_ID = `"{platform}"`）
+- [ ] `BizScenarioFactory.createByTicket()` 新增路由 case
+- [ ] 实现 Create 阶段扩展点（参考 LINE，继承 Abstract*Inbox* 基类）
+  - [ ] `FindChannelAuthExtPt`
+  - [ ] `FindOrCreateCustomerExtPt`
+  - [ ] `BuildMessageExtPt`
+  - [ ] `SubjectExtPt`
+  - [ ] `FindExistTicketExtPt` — 按 externalId 精确匹配（**不使用**时间窗口合并）
+  - [ ] `CheckCanCreateExtPt`
+  - [ ] `NewOrReopenTicketExtPt`
+  - [ ] `SaveDataExtPt`
+- [ ] 实现 Reply 阶段扩展点
+  - [ ] `DeliveryResponseExtPt` 继承 `AbstractInboxDeliveryResponseExtPt`，`getExternKeySource()` 返回对应枚举
 
 ### Livechat接入 Checklist
 {Only include this section if Livechat对接 is ✅ or ⚠️}

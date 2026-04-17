@@ -136,6 +136,7 @@ If user says continue:
   需要以下代码库已通过 `/add-dir` 加入当前会话：
   - `shulex-intelli`（后端实现）
   - `shulex-smart-service`（前端实现，如需前端集成）
+  - `tars`（AI 回复生成服务，工单 AI 回复功能必须）
 
   若未添加：
 
@@ -144,6 +145,7 @@ If user says continue:
 
   /add-dir /path/to/shulex-intelli
   /add-dir /path/to/shulex-smart-service   ← 如需前端集成
+  /add-dir /path/to/tars                   ← 工单 AI 回复必须
 
   添加后告知我，将继续启动设计阶段。
   ```
@@ -192,6 +194,14 @@ If user says continue:
   - Webhook 入口: POST /v2/webhook/{PLATFORM_ID}/{xToken}（WebhookDispatchController 已实现，无需改动）
   - Plugin 通过 Spring AutoConfiguration 自动注册，参考 intelli-ticket-line 模块
   - 前端集成参考 ShopifyAuth（AuthPageScaffold 模式）和 FreshDesk（API Key 授权）
+
+  架构背景（Tars 关键约定）:
+  - Intelli 调用 Tars 创建工单并异步获取 AI 回复；Tars 通过 botReplyCallback 将 AI 回复返回 Intelli
+  - 新平台必须在 Tars 注册 bizType，否则报错"不存在该平台"
+  - 工单 AI 回复平台应使用 Inbox 型 bizType（同 LINE/TikTok），Tars 回调 Intelli，由 Intelli 负责投递回复
+  - Tars 需新建：XxxBizConstants / Create 阶段扩展点 / Reply 阶段扩展点（DeliveryResponseExtPt 继承 AbstractInboxDeliveryResponseExtPt）/ BizScenarioFactory 路由 case
+  - FindExistTicketExtPt 应按 externalId 精确匹配（不使用时间窗口合并，区别于 LINE 的 AbstractSettingMergeFindExistTicketExtPt）
+  - ChannelAuthTypeEnum 需新增枚举值（value 必须与 Intelli ChannelTypeEnum 的值完全一致）
 
   请参考报告中的接入 checklist 作为实现起点。
   实现完成并执行 superpowers:finishing-a-development-branch 之后，主动运行 /intelli:retrospective 进行复盘。
