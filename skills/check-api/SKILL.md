@@ -38,6 +38,7 @@ assign a status to each capability:
 |------------|-----------|------------|---------|
 | Webhook push — custom URL | Required | parseWebhook | Platform allows configuring a custom webhook URL (POST to Shulex URL) |
 | Fetch ticket messages | Required | getMessages | GET messages/comments on ticket |
+| **Message sender role detection** | **Required** | getMessages | **How to distinguish customer messages from agent messages in the response.** Look for: a `role`/`author_type` field; an `is_agent` flag; or a sender `userId`. ⚠️ If NO role field exists and sender `userId` is always populated for both customer and agent (common in helpdesk APIs), check whether the webhook can supply the contact's userId for comparison — note any required webhook body variables (e.g. `{$contact_userid}`) that the client must configure. |
 | Fetch ticket subject | Required | getSubject | Subject/title field in ticket detail API |
 | Send reply | Required | sendReply | POST reply/comment to ticket |
 | Read current tags/labels | Required | getTags | GET ticket tags/labels |

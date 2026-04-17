@@ -4,6 +4,15 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.12.0] - 2026-04-17
+
+### Changed
+- **`skills/check-api/SKILL.md` Feature 1 新增能力行**：在"Fetch ticket messages"后新增"**Message sender role detection**"（Required）。分析阶段必须明确：平台是否有 role/author_type 字段？若无，userId 对 customer 和 agent 是否均非空？若是，需标注 webhook 必须传入 contactUserId 供对比（如 LiveAgent `{$contact_userid}`）。此检查缺失是 LiveAgent LastMessageRoleFilter 将所有消息误判为 ASSISTANT 的根因。
+- **`skills/map-arch/SKILL.md` 映射表新增行**：`getMessages()` 下新增"role detection"条目，要求评估 API 是否能独立判断消息发送方角色，若不能则记录 workaround（webhook 变量补充）及 gap 级别。
+- **`skills/report/SKILL.md` Checklist 补全**：`getMessages()` 条目新增 role 判断机制和所需 webhook 变量两个子项，确保 spec.md 在分析阶段就明确客户需配置的 webhook body 变量，而不是留到测试才发现。
+
+---
+
 ## [2.11.0] - 2026-04-17
 
 ### Added

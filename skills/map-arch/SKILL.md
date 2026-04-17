@@ -31,6 +31,7 @@ Map each platform capability to the TicketEngine V2 interface requirement:
 | `TicketPlatformPlugin.parseWebhook()` | Webhook push + parseable JSON payload | | |
 | `TicketPlatformPlugin.extractCredentialKey()` | Token in URL path or header | | |
 | `TicketOperations.getMessages()` | Fetch ticket messages/comments API | | |
+| `getMessages()` — **role detection** | Field distinguishing customer vs agent in message response | | ⚠️ If no role field: check if sender `userId` is always populated. If so, platform needs to supply contact's userId via webhook payload for comparison — document required webhook body variables. |
 | `TicketOperations.getTags()` | Read current ticket tags API | | |
 | `TicketOperations.getSubject()` | Ticket title/subject field | | |
 | `TicketOperations.sendReply()` | POST reply/comment API | | |

@@ -278,7 +278,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
   - [ ] `createOperations()` 创建 ChannelAuthCredential
   - [ ] `parsePlatformConfig()` 解析平台特有配置
 - [ ] 实现 `TicketOperations`
-  - [ ] `getMessages()` — 接口: {platform API endpoint}
+  - [ ] `getMessages()` — 接口: {platform API endpoint}；**role 判断机制**: {平台是否提供 role/author_type 字段？若无，如何区分客户和客服消息？}；**所需 webhook 变量**: {若 role 判断依赖外部上下文（如 contactUserId），列出需在 webhook body 中配置的变量，如 `contactUserId={$contact_userid}`}
   - [ ] `getTags()` — 接口: {platform API endpoint}
   - [ ] `getSubject()` — 接口: {field in ticket response}
   - [ ] `sendReply()` — 接口: {platform API endpoint}
