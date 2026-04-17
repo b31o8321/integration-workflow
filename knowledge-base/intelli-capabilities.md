@@ -223,7 +223,10 @@ Intelli TicketOperations.sendReply()（实际投递）
 2. **新建 `{Platform}BizConstants`**  
    `BIZ_ID_XXX = "{platform}"` （小写，与 ChannelTypeEnum value 一致）
 
-3. **`BizScenarioFactory.createByTicket()` 新增路由 case**  
+3. **`BizScenarioFactory` 两个方法都必须新增路由 case**  
+   ⚠️ **`createByTicket()` 和 `createByChannelType()` 都要加**，缺任何一个都会触发 NPE：
+   - `createByTicket()` — Tars 内部工单回复路由（如 AI 完成后查工单）
+   - `createByChannelType()` — Inbox 创单路由（Intelli 调 `POST /service/inbox/create` 时走这里）
    ```java
    case LIVEAGENT:
        bizType = {Platform}BizConstants.BIZ_ID_XXX;

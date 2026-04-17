@@ -4,6 +4,14 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.14.0] - 2026-04-17
+
+### Changed
+- **`knowledge-base/intelli-capabilities.md` Tars 注册要求第 3 条更新**：明确 `BizScenarioFactory` 的两个方法 `createByTicket()` 和 `createByChannelType()` 都必须新增路由 case，缺少 `createByChannelType()` 会导致 Inbox 创单 NPE（Tars `TicketCreateBizServiceImpl` 第 182 行）。来源：LiveAgent 接入测试发现。
+- **`skills/report/SKILL.md` Tars Checklist 同步**：新增 `createByChannelType()` 独立条目，含警告说明。
+
+---
+
 ## [2.13.0] - 2026-04-17
 
 ### Changed

@@ -292,6 +292,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
 - [ ] `ChannelAuthTypeEnum` 新增枚举值（value 与 Intelli ChannelTypeEnum 一致）
 - [ ] 新建 `{Platform}BizConstants`（BIZ_ID = `"{platform}"`）
 - [ ] `BizScenarioFactory.createByTicket()` 新增路由 case
+- [ ] `BizScenarioFactory.createByChannelType()` 新增路由 case（⚠️ 与上一行都必须加，缺一导致 Inbox 创单 NPE）
 - [ ] 实现 Create 阶段扩展点（参考 LINE，继承 Abstract*Inbox* 基类）
   - [ ] `FindChannelAuthExtPt`
   - [ ] `FindOrCreateCustomerExtPt`
