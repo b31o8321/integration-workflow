@@ -4,6 +4,14 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.13.0] - 2026-04-17
+
+### Changed
+- **`knowledge-base/intelli-capabilities.md` 凭证 Checklist 新增 `buildTicketConfig()` 项**：ChannelAuth 平台必须覆盖此方法，将 `channelAuth.getId()` → `tarsChannelId`，并手动映射 metadata 字段。不覆盖将导致 Tars 报 `channelId is required`，因为 `TicketMetadata.channelId` 与 `TicketConfig.tarsChannelId` 字段名不同，直接 JSON 解析无法赋值。来源：LiveAgent 接入测试时发现。
+- **`skills/report/SKILL.md` Checklist 同步**：`TicketPlatformPlugin` 实现项新增 `buildTicketConfig()` 覆盖条目，含说明和错误后果。
+
+---
+
 ## [2.12.0] - 2026-04-17
 
 ### Changed

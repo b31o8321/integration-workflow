@@ -19,6 +19,7 @@
 - [ ] `XxxTicketPlugin` 覆盖 `resolveCredential()` 和 `resolveCredentialByKey()`
 - [ ] `XxxTicketAutoConfiguration` 注入 `IChannelAuthRepository` + `ApiKeyService`
 - [ ] Controller 使用 `IChannelAuthRepository` 存储 ChannelAuthDO
+- [ ] **`XxxTicketPlugin` 覆盖 `buildTicketConfig()`**（ChannelAuth 平台必须）：`tarsChannelId = channelAuth.getId()`，`touchPoint = ChannelTypeEnum.XXX.getValue()`，并将 metadata 字段手动映射到 `TicketConfig`。不覆盖则引擎用 JSON 直接解析 metadata 为 `TicketConfig`，但 `TicketMetadata.channelId` ≠ `TicketConfig.tarsChannelId`（字段名不同），导致 `tarsChannelId = null`，Tars 报 `channelId is required`。参考 `LineTicketPlugin.buildTicketConfig()`
 
 ### TicketPlatformPlugin 接口
 

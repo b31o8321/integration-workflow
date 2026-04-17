@@ -275,6 +275,7 @@ Generate all four documents. Fill every section with real analysis — no placeh
   - [ ] `parseWebhook()` 解析 webhook payload + 签名验证
   - [ ] `resolveCredential()` 覆盖，使用 ChannelAuth 模式（参考 LineTicketPlugin）
   - [ ] `resolveCredentialByKey()` 覆盖，使用 ChannelAuth 模式
+  - [ ] **`buildTicketConfig()` 覆盖**（ChannelAuth 平台必须）：`tarsChannelId = channelAuth.getId()`，`touchPoint = ChannelTypeEnum.{platform}.getValue()`，手动映射 metadata 字段。不覆盖将导致 Tars 报 `channelId is required`（`TicketMetadata.channelId` ≠ `TicketConfig.tarsChannelId`）
   - [ ] `createOperations()` 创建 ChannelAuthCredential
   - [ ] `parsePlatformConfig()` 解析平台特有配置
 - [ ] 实现 `TicketOperations`
