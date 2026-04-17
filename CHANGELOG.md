@@ -4,6 +4,13 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.15.0] - 2026-04-17
+
+### Added
+- **`skills/debug/SKILL.md` 新增集成调试 Skill**：覆盖三种排查模式——错误日志分析（含常见错误模式速查表）、SLS 链路日志分析（沉默失败识别）、aliyun CLI 直查模式（直接查询 SLS 日志）。来源：LiveAgent 集成测试中 `botId=null` 沉默失败排查过程总结。常见场景包括：无 AI 回复、Webhook 未触发、授权报错、前端 `res?.data` 为 undefined。
+
+---
+
 ## [2.14.0] - 2026-04-17
 
 ### Changed
