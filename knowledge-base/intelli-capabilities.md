@@ -1,6 +1,6 @@
 # Intelli 系统能力
 
-> 最后更新: 2026-04-17（新增：Tars AI 回复架构约定）
+> 最后更新: 2026-04-20（新增：form-encoded v1 API 约定、sendReply md2html 说明；修复 webhook URL 示例 LIVEAGENT → LIVE_AGENT）
 
 ## TicketEngine V2 SPI
 
@@ -41,12 +41,37 @@
 | `getMessages()` | ✅ | 返回标准化 TicketMessage 列表 |
 | `getTags()` | ✅ | 返回 List<String> |
 | `getSubject()` | ✅ | 返回工单 subject 字符串 |
-| `sendReply()` | ✅ | 发送 AI 回复 |
+| `sendReply()` | ✅ | 发送 AI 回复。**Tars 返回的 AI 内容是 Markdown**，若目标平台渲染 HTML（如 LiveAgent `is_html_message=Y`），需在 `TicketOperations.sendReply()` 中调用 `TextUtil.md2html(reply.getTextContent())` 转换后再发送。纯文本平台可直接用 `reply.getTextContent()`。 |
 | `sendHumanReply()` | ✅ | 默认回退到 sendReply，富媒体平台可覆盖 |
 | `applyTags()` | ✅ | 批量打标签 |
 | `lockKey()` | ✅ | 幂等锁 key，可平台自定义 |
 
-### 已实现 TicketPlatformPlugin 的平台（新 SPI）
+### ThirdPartyApiClient：form-encoded v1 API 处理
+
+部分平台（如 LiveAgent v1 `/api/conversations/`）写接口要求 `application/x-www-form-urlencoded`，而 `ThirdPartyApiClient.httpRequestBuilder()` 默认设 JSON body。
+
+**解决方式**：在客户端类覆盖 `customAttributeSetting()`，将 JSON 字段转为 form 参数，并**显式覆盖 Content-Type 头**：
+
+```java
+@Override
+public void customAttributeSetting(HttpRequest request, ChannelAuthDO channelAuth, Object data) {
+    String url = request.getUrl();
+    if (data == null || url == null || !url.contains("/api/conversations/")) {
+        return;
+    }
+    Map<String, Object> params = JSON.parseObject(JSON.toJSONString(data));
+    params.forEach((k, v) -> {
+        if (v != null) request.form(k, v.toString());
+    });
+    // ⚠️ 必须显式覆盖：Hutool form() 清除 this.body 字符串，但不修改 Content-Type 头
+    // body(String) 已将 Content-Type 设为 application/json，必须手动纠正
+    request.header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8", true);
+}
+```
+
+参考实现：`LiveAgentClient.customAttributeSetting()`
+
+
 
 | 平台 | 凭证模式 | 参考实现 | 备注 |
 |------|---------|---------|------|
@@ -399,10 +424,10 @@ public SettingResponse getSetting() { ... }
 
 ```java
 // 正确 ✅
-String webhookUrl = webhookBaseUrl + "/api_v2/intelli/v2/webhook/LIVEAGENT/" + token;
+String webhookUrl = webhookBaseUrl + "/api_v2/intelli/v2/webhook/LIVE_AGENT/" + token;
 
 // 错误 ❌（缺少 gateway 前缀，LiveAgent Rules 会打到 404）
-String webhookUrl = webhookBaseUrl + "/v2/webhook/LIVEAGENT/" + token;
+String webhookUrl = webhookBaseUrl + "/v2/webhook/LIVE_AGENT/" + token;
 ```
 
 后端服务本身只暴露 `/v2/webhook/{platform}/{token}`，gateway 在转发时会剥除 `/api_v2/intelli` 前缀。对外展示的 URL（如 `webhook-url` 接口返回值、前端引导文案）必须带完整前缀。
@@ -578,7 +603,7 @@ Step 3: API 连通性（运行 ClientTest）
 Step 4: 完整链路验证
   → 在三方平台创建一条测试工单（或回复已有工单触发 webhook）
   → 查看 staging 日志确认 webhook 被接收：
-    grep "LIVEAGENT\|liveagent" /logs/intelli.log
+    grep "LIVE_AGENT\|liveagent" /logs/intelli.log
   → 等待 AI 自动回复（通常 10–30 秒）
   → 在三方平台工单界面确认：
     ✅ AI 回复内容出现

@@ -4,6 +4,16 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.17.0] - 2026-04-20
+
+### Changed
+- **`knowledge-base/intelli-capabilities.md` 新增两条实现约定**（来自 LiveAgent 集成最终测试阶段）：
+  ① `sendReply()` 说明：Tars 返回的 AI 内容是 Markdown，若平台渲染 HTML 需在 `TicketOperations.sendReply()` 中调用 `TextUtil.md2html()` 转换；
+  ② `ThirdPartyApiClient` form-encoded v1 API 处理约定：覆盖 `customAttributeSetting()` 添加 form 参数，**必须显式覆盖 Content-Type 头**为 `application/x-www-form-urlencoded`（Hutool `form()` 清除 body 字符串但不修改 Content-Type，不手动修改会导致 400）。
+- **`knowledge-base/intelli-capabilities.md` 修复 LIVEAGENT 拼写错误**：webhook URL 示例及 E2E 日志 grep 模式中的 `LIVEAGENT` 改为 `LIVE_AGENT`，与实际 `ExternKeySourceEnum.LIVE_AGENT.name()` 一致。
+
+---
+
 ## [2.16.0] - 2026-04-17
 
 ### Changed
