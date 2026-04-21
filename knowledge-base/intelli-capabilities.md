@@ -554,6 +554,9 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 
 ### 集成测试（API 连通性）：`{Platform}ClientTest`
 
+> ⚠️ **执行时机：写 `TicketOperations` 之前，不是之后。**  
+> 三方文档经常省略关键细节（body 格式、必填参数、特殊行为），靠文档推断再到 staging 验证会放大反馈周期。先跑 ClientTest 确认实际 API 行为，再写 TicketOperations。
+
 **位置**：`shulex-intelli-integration/src/test/java/.../{Platform}ClientTest.java`
 
 **原则**：

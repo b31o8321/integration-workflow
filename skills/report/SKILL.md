@@ -266,6 +266,8 @@ Generate all four documents. Fill every section with real analysis — no placeh
 ### 工单AI回复接入 Checklist
 {Only include this section if 工单AI回复 is ✅ or ⚠️}
 
+**⚠️ 实现顺序：先写 ClientTest 跑通 → 再写 TicketOperations**（见 spec.md 实现顺序约束）
+
 **Intelli（shulex-intelli）：**
 - [ ] `ChannelTypeEnum` 中注册新平台枚举值（value 须与 Tars ChannelAuthTypeEnum 的 value 一致）
 - [ ] 创建 Maven 子模块 `intelli-ticket-{platform}`
@@ -389,7 +391,17 @@ Generate all four documents. Fill every section with real analysis — no placeh
 
 {Remove lines for infeasible features.}
 
-## 差距列表（仅可行项）
+## 实现顺序约束
+
+> ⚠️ **ClientTest 必须先于 TicketOperations 实现**
+>
+> 在写 `getMessages()` / `sendReply()` / `applyTags()` 之前，**必须先写并跑通 `{Platform}ClientTest`**，用真实 API 验证实际行为：
+> - request 格式（JSON 还是 form-encoded？）
+> - response 字段结构（以实测为准，文档可能滞后）
+> - 写接口的必填参数（文档经常省略，如 LiveAgent `useridentifier`、`type=M`）
+>
+> 只有实测结论明确后，TicketOperations 才能基于正确假设编写，避免 staging 才能发现问题的长反馈周期。
+
 
 | 差距 | 严重程度 | Workaround |
 |------|---------|-----------|

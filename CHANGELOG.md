@@ -4,6 +4,15 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.18.0] - 2026-04-21
+
+### Changed
+- **`skills/report/SKILL.md` spec.md 模板新增"实现顺序约束"章节**：明确要求 `{Platform}ClientTest` 必须在 `TicketOperations` 实现之前写并跑通，用真实 API 验证 body 格式、response 结构、写接口必填参数。来源：LiveAgent 集成复盘，form-encoded body 和 `useridentifier` 问题均因未预先实测导致 staging 才发现。
+- **`skills/report/SKILL.md` dev.md Checklist 新增顺序提示**：工单AI回复接入 Checklist 顶部加"⚠️ 实现顺序：先写 ClientTest 跑通 → 再写 TicketOperations"。
+- **`knowledge-base/intelli-capabilities.md` ClientTest 原则新增执行时机说明**：明确 ClientTest 是实现前置，不是事后 E2E 验证步骤。
+
+---
+
 ## [2.17.0] - 2026-04-20
 
 ### Changed
