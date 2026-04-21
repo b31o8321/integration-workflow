@@ -65,6 +65,32 @@ version: 1.0.0
 
 搜索 `ISyncService` 实现类，列出已支持的同步类型。
 
+### 5. Chain Docs 更新检查
+
+读取 `knowledge-base/chain-docs/` 下所有文件，逐一核查以下内容是否仍与代码库匹配：
+
+**ticket-ai-reply.md**
+- `BaseTicket` 抽象方法列表是否完整（grep `abstract` in `BaseTicket.java`）
+- `DelayProcessTicketJob.replyTicket()` 中的平台分支是否有新增
+- 幂等锁 Key 格式是否变化
+
+**voice.md**
+- `VoiceTicketSystemResolver` 路由规则是否有新增平台/条件
+- callType 映射表是否有新值
+- 新增 Handler 实现类
+
+**livechat-sync.md**
+- `BaseLivechatClient` 抽象方法是否有变化
+- 同步模式枚举是否新增
+- `ExternChatRelationDO` 字段是否变化
+
+**data-sync-job.md**
+- `SyncExecutionEngine` 配置参数是否变化
+- 分布式锁 Key 格式是否变化
+- 新增 `ISyncService` 实现（对应新平台）
+
+对每个文件：若代码与文档一致则跳过；若有差异则记录需更新的具体内容。
+
 ## Analysis: shulex_gpt
 
 若检测到 shulex_gpt，执行以下分析：
@@ -99,6 +125,11 @@ version: 1.0.0
 3. 对比分析结果与现有内容，更新变更项
 4. 在文件头部更新"最后更新"日期
 5. 新增能力标注 `NEW`，状态变更的标注 `UPDATED`
+
+若 chain-docs 检查（Step 5）发现差异，同步更新对应的 `knowledge-base/chain-docs/*.md`：
+- 只更新有实际差异的文件
+- 在文件头部注释更新日期和变更摘要
+- 不改动无变化的章节
 
 ## Post-Update Instructions
 
