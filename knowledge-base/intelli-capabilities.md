@@ -88,6 +88,7 @@ public void customAttributeSetting(HttpRequest request, ChannelAuthDO channelAut
 |------|------|------|
 | LINE | Ticket | ✅ |
 | LiveAgent | Ticket | ✅ |
+| CustomTicket | Ticket（HTTP 工单系统）| ✅ |
 
 ### ExternKey 模式（遗留）
 
@@ -283,6 +284,61 @@ Intelli TicketOperations.sendReply()（实际投递）
 |------|------|---------|---------|
 | 时间窗口合并 | `AbstractSettingMergeFindExistTicketExtPt` | LINE（无持久 ticketId） | 同客户 + 同渠道 + 最近 N 天 |
 | 精确匹配 | 直接实现 `FindExistTicketExtPt` | 帮助台平台（有 ticketId） | `ticketQueryService.findByExternalId(accountId, externalId)` |
+
+### Webhook URL 安全设计（防 IDOR）
+
+**禁止用纯数字 channelId 当 webhook token**——枚举攻击可触发别人 channel 的 queryUrl/replyUrl，并在受害者侧消耗 AI 推理配额。
+
+| ❌ 错误 | ✅ 正确 |
+|------|------|
+| `/v2/webhook/{PLATFORM}/{numericChannelId}` | `/v2/webhook/{PLATFORM}/{xToken}/{channelId}` |
+
+实现要点：
+- `xToken` 从 `ChannelUtil.getApiKey(tenantId, userId)` 取（UUID 格式不可枚举）
+- `AbstractChannelAuthController.getWebhookUrl` 子类必须 `@Override` 用 xToken/{channelId} 格式
+- `AbstractChatChannelPlugin.resolveCredential` / `AbstractTicketSystemPlugin.resolveCredential` 已移除"纯数字 token → ChannelAuth 直查"的旧路径，必须经 `apiKeyService.getApiKeyByToken` 校验 `channelAuth.accountId == apiKey.tenantId`
+
+### channelAuth metadata 字段约定（botId + xToken）
+
+`TicketProcessingEngine.buildInboxCreateRequest` 从 `TicketConfig` 读取 `botId/xToken` 构建 `aiSetting{aiOpened, botId, token}`。channelAuth 创建时（`doAuth`）必须显式：
+
+```java
+String xToken = ChannelUtil.getApiKey(tenantId, CactusUtil.getUserId());
+metadata.setXToken(xToken);
+List<GetBotResponse> bots = gptBotFeign.getBots(xToken);
+if (bots != null && !bots.isEmpty()) {
+    metadata.setBotId(bots.get(0).getId());        // 取首个 bot 当默认
+}
+ChannelAuthDO ca = new ChannelAuthDO();
+ca.setBotId(defaultBotId);                          // 同时写到 ChannelAuthDO.bot_id 列
+ca.setMetadata(JSON.toJSONString(metadata));
+```
+
+**忘记这步的症状**：tars 端 `ApiIntegrationGatewayImpl#getFieldMapping/isFillFieldsApiEnabled` 报 `tenantId=xxx, botId=null`，AI 字段抽取 skip。
+
+### buildTicketConfig 向后兼容 fallback
+
+`AbstractChannelAuthPlugin.buildTicketConfig` 提供老数据兼容：metadata JSON 缺 `botId/xToken` 时降级用 `ChannelAuthDO.bot_id` 列 / `ApiKeyService.getApiKeys(accountId)`。新接入平台**必须依赖正确的 `doAuth` 写 metadata**，fallback 是兜底，不是设计目标。
+
+### Tars view 创建时机
+
+新平台 channel 授权完成后必须调 `ticketViewApi.processChannel` 让 tars 创建工单视图，否则 tars 工单列表里看不到该 channel：
+
+| 用户类型 | 触发点 | 调用方 |
+|---------|------|------|
+| SLG | controller `createChannel` super 调用之后 | `CustomTicketChannelController.createChannel` 等 |
+| PLG | `PersonaCreatedEvent` 处理 | `PlgPersonaService.createChannelViews` |
+
+`tars TicketViewServiceImpl.channelCreteView` 按 `channelType.kind` 路由。**邮件型工单系统**（如 LiveAgent，kind=EMAIL）走 `emailChannelCreteView`；**HTTP 工单系统**（如 CustomTicket，虽然 kind=EMAIL）应显式走 `otherChannelCreteView` 跳过 emailExclude 过滤。
+
+### Operations HTTP 调用统一走 ThirdPartyApiClient
+
+平台插件的 `TicketOperations` 实现里调用第三方 HTTP API 时，**不要直接用 `cn.hutool.HttpRequest`**，应通过 `com.shulex.intelli.intergration.standard.client.ThirdPartyApiClient.sendRequest()`：
+- 自带重试（指数退避，4 次）
+- 统一日志格式
+- 异常转 `BusinessException`
+
+子类化 `ThirdPartyApiClient<AuthContext>` 提供 `getBaseUrl/addAuthorization`，作为 `@Component` 注入到 plugin，再传给 operations。参考 `intelli-ticket-customticket/CustomTicketHttpClient`。
 
 ---
 

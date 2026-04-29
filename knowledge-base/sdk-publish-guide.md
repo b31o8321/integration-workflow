@@ -32,5 +32,22 @@ JAVA_HOME=/path/to/jdk8 \
 
 - Tars CI 报 `cannot find symbol: ExternKeySourceEnum.XXXX`
 - Tars CI 报 `package com.shulex.xxx does not exist`
+- Intelli CI 报 `cannot find symbol: VoiceAttachment / setPhoneType / setVoiceDuration` 之类（来自 `tars-client`）
 
-→ 原因：SDK 改了但未 deploy，或 Tars pom.xml 版本号未更新。
+→ 原因：SDK / Client 改了但**未 deploy**，或下游 pom.xml 版本号未更新。**本地 mvn install 看不到 Nexus 上的旧 JAR**——本地能跑 CI 不能跑就是这个症状。
+
+## 跨仓变更对照表（开发前必填）
+
+涉及多仓库的需求，开发**前**先填一份 checklist：
+
+| 仓库 | 改什么 | 版本号是否递增 + deploy | 部署顺序 |
+|------|------|------|------|
+| `shulex-intelli-sdk` | 新增枚举/字段 | **必须**：版本号 +1 + `mvn deploy` 到 Nexus | 第 1 |
+| `tars-client` | 新增方法/字段（如 `InboxCreateRequest.VoiceAttachment` 内部类）| 同上 | 第 1 |
+| 服务端（intelli/tars）| 引用新字段 | pom 升版本号 | 第 2 |
+| 前端 | 调新接口 | - | 第 3 |
+
+**反模式**（不要做）：
+- 改 SDK 源码不递增版本号——CI 拉的还是 Nexus 上的旧 JAR
+- 同一个 SNAPSHOT 重新 deploy 覆盖——破坏构建可重现性
+- 多仓 PR 同时 merge 不分先后——下游编译时上游 JAR 还没出
