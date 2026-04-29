@@ -1,7 +1,7 @@
 ---
 name: retrospective
 description: Post-development retrospective. Two modes — integration project (updates plugin knowledge base and skill files) or general feature work (updates CLAUDE.md and project docs with architecture conventions and lessons learned). Run after finishing any significant development branch.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # intelli:retrospective — Post-Development Retrospective
@@ -107,9 +107,44 @@ version: 1.1.0
 
 ---
 
+### Step 3.5: E2E Spec 沉淀检查
+
+询问 / 自检：
+
+```
+本次开发是否有 E2E spec 沉淀？（4 层验证法 — UI / HTTP / SLS / 真人）
+
+→ 已沉淀: 列出 spec 文件路径
+→ 部分沉淀: 哪些层做了，哪些没做
+→ 未沉淀: 是否需要补？跑 /intelli:e2e-verify 引导
+```
+
+判断标准（建议沉淀）：
+
+- [ ] 涉及跨服务调用（intelli ↔ Tars 等）→ **L3 SLS 不可跳**
+- [ ] 改了授权 / 凭证模式 → L1 + L2 必须有 spec
+- [ ] 改了 webhook 入口 / 路由 → L2 必须有 spec
+- [ ] AI 回复链路相关 → **L4 真人 watcher 不可跳**
+
+如果未沉淀，提示：
+
+```
+⚠️ 本次开发未留 E2E spec。下次回归只能再跑人工测试。
+   建议跑 `/intelli:e2e-verify <feature>` 引导沉淀，~30 分钟生成 spec 集，后续重跑 5 分钟。
+   是否现在跑？
+```
+
+如已沉淀，提示同步以下信息到 plugin（如适用）：
+
+- 新发现的 staging 坑 → 项目本地 `CLAUDE.md`（不进 plugin）
+- 新发现的跨项目通用经验 → `knowledge-base/e2e-verification-guide.md`（进 plugin，本步骤补一段）
+- 新发现的业务约定 → `intelli-capabilities.md` Step 1 已覆盖
+
+---
+
 ### Step 4: 版本更新
 
-若 Step 1–3 修改了任何文件：
+若 Step 1–3.5 修改了任何文件：
 
 ```bash
 # 仅知识库更新 → patch
@@ -173,6 +208,10 @@ git push
 - Commit 并 push
 
 若无影响 → 跳过，无需 bump 插件版本
+
+### Step B4: E2E Spec 沉淀检查
+
+同 Mode A Step 3.5 — 检查本次开发是否有 4 层 E2E spec 沉淀。判断标准 + 处理方式参见 Mode A 同名步骤。**Mode B 通用功能也鼓励沉淀**，特别是涉及多服务、跨仓、重构架构的改动。
 
 ---
 

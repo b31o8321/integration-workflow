@@ -118,6 +118,8 @@ docs/platform-analysis/YYYY-MM-DD-{platform-name}/
 | `intelli:report` | 生成角色定制的四份报告文档（pm/arch/dev/spec）；spec.md 含 E2E 验收 Checklist |
 | `intelli:retrospective` | 集成项目完成后的复盘：更新知识库、修正 Skill 错误、提炼架构约定；`finishing-a-development-branch` 完成后自动触发 |
 | `intelli:update-kb` | 分析代码库，更新系统能力知识库 |
+| `intelli:e2e-verify` | 4 层 E2E 端到端验收（UI / HTTP / SLS / 真人 watcher）；含 preflight 检查 + bootstrap 本地 E2E 项目引导 |
+| `intelli:debug` | 集成调试：armsTrace 链路追踪、SLS 日志分析、`aliyunlog` CLI 直查 |
 
 ## 集成验收要求
 

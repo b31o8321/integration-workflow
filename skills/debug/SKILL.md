@@ -1,7 +1,7 @@
 ---
 name: debug
 description: Intelli + Tars integration debugging guide. Guides users through finding armsTrace, downloading full chain logs from SLS/ARMS, and analyzing them. Use when a user reports unexpected behavior during integration testing — no AI reply, webhook not received, auth failure, etc.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # intelli:debug — Integration Debugging Guide
@@ -147,29 +147,82 @@ ARMS 控制台 → 应用监控 → 选择 intelli 应用 → 调用链查询
 
 ---
 
-## 附：aliyun CLI 直查（可选）
+## 附 A：`aliyunlog` CLI 直查（推荐）
 
-本机配置了 `aliyun` CLI 时，可以直接代为查询（无需用户手动下载）：
+本机配置了 `aliyunlog` CLI 时（`pip install aliyun-log-cli`），优先用直查模式 — 无需用户手动下载。
 
-```bash
-# 检查是否可用
-aliyun --version && aliyun configure list
-```
-
-如可用，直接执行查询：
+### Preflight
 
 ```bash
-# 用 ticketId 找 armsTrace
-aliyun log get_log \
-  --project=<project> --logstore=<logstore> \
-  --from=$(date -v-30M +%s) --to=$(date +%s) \
-  --query='ticketId:<TICKET_ID> | SELECT armsTrace LIMIT 5'
+which aliyunlog && aliyunlog --version
+# 期望：log-cli-v-X.X.X
 
-# 用 armsTrace 拉全链路 INFO+WARN+ERROR
-aliyun log get_log \
-  --project=<project> --logstore=<logstore> \
-  --from=<start> --to=<end> \
-  --query='armsTrace:<TRACE_ID> AND severity IN ("INFO","WARN","ERROR") | SELECT __time__, class, severity, rest ORDER BY __time__ LIMIT 500'
+# 烟雾测试（确认 project/logstore 配置 + 网络通）
+aliyunlog log get_log \
+  --project="<sls-project>" --logstore="<sls-logstore>" \
+  --query='*' --from_time="-60s" --to_time="now" --size=1
 ```
 
-> project / logstore 名称首次使用时询问用户确认。
+> project / logstore 名称首次使用时询问用户确认；本插件不硬编码。
+
+### 常用查询模板
+
+```bash
+# 用 ticketId 找 armsTrace（最近 30 分钟）
+aliyunlog log get_log \
+  --project=<project> --logstore=<logstore> \
+  --query='"<TICKET_ID>"' \
+  --from_time="-30m" --to_time="now" --size=10
+
+# 用 armsTrace 拉整条跨服务链路
+aliyunlog log get_log \
+  --project=<project> --logstore=<logstore> \
+  --query='"<armsTrace>"' \
+  --from_time="-10m" --to_time="now" --size=200
+
+# 关键节点 OR 搜（宽松，便于多关键词命中）
+aliyunlog log get_log \
+  --project=<project> --logstore=<logstore> \
+  --query='"channelId=<ID>" and ("Webhook parsed" or "inbox_create_request" or "Reply sent")' \
+  --from_time="-5m" --to_time="now" --size=100
+```
+
+### 解析与断言（脚本化）
+
+```bash
+# Bash 解出关键字段
+... | python3 -c "
+import sys, json
+rows = json.loads(sys.stdin.read() or '[]')
+for r in rows:
+    print(f\"{r['@timestamp']}  {r['severity']:<5}  {r['service']:<10}  {r['class']}\")
+    print(f\"    {r['rest'][:200]}\")
+"
+```
+
+---
+
+## 附 B：跨服务断言宽松法则（**避免工具掩盖业务**）
+
+写自动化 spec 验证 SLS 链路时，断言**默认宽松**：
+
+| 反模式 | 正确模式 |
+|------|------|
+| `class === 'com.shulex.intelli.ticket.starter.engine.TicketProcessingEngine'` | `/TicketProcessingEngine\b/` 或包尾匹配 |
+| 单关键词精确匹配 | OR 多关键词：`/processWebhook|inbox_create_request|Reply sent/` |
+| 同步等几秒就查 | **等 ≥ 12s** —— intelli → Tars → callback 链路滞后 |
+| Spec fail 立即怀疑业务 | **先怀疑选择器**（class 字段是缩写名），再怀疑业务 |
+
+**理由**：SLS 的 `class` 字段是缩写（如 `c.s.i.t.s.engine.TicketProcessingEngine`）。精确匹配会把"业务全通过 / 工具失败"误报成业务失败，浪费排查时间。
+
+---
+
+## 附 C：与 E2E 验收的衔接
+
+如果用户的"调试"实际上是新需求验收，跳到 `/intelli:e2e-verify` 走 4 层 E2E 流程，比单点排查更系统。
+
+判断界限：
+- 单 traceId / 单错误 → 本 skill（debug）
+- 整个特性需要回归 / 重构验收 → `/intelli:e2e-verify`（4 层 spec 沉淀）
+
+参考：`knowledge-base/e2e-verification-guide.md`。

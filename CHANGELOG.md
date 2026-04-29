@@ -4,6 +4,47 @@ All notable changes to the Intelli plugin are documented here.
 
 ---
 
+## [2.20.0] - 2026-04-29
+
+### Added — 4 层 E2E 验收法
+
+- **新 Skill `intelli:e2e-verify`**（`skills/e2e-verify/SKILL.md`）：4 层 E2E 端到端验收编排（UI / HTTP / SLS / 真人 watcher）。含 preflight 检查（`aliyunlog`、Node、Chromium、SLS 烟雾测试、环境变量），引导用户 bootstrap 本地 E2E 项目（不强制推 Git 远程，每个开发者独立 bootstrap），按需生成各层 spec 并跑出复用回归。来源：`feature/ticket-v2-channelauth-arch` 验收实践。
+- **新知识库文档 `knowledge-base/e2e-verification-guide.md`**：4 层验证模型 + Playwright project 配置模板 + adopt-existing 模式 + armsTrace 跨服务串场法则 + 真人 watcher 模式 + staging 通用坑收集模板。
+
+### Changed
+
+- **`skills/retrospective/SKILL.md` 新增 Step 3.5 / B4 — E2E Spec 沉淀检查**：复盘流程加一步检查本次开发是否有 4 层 E2E spec 沉淀，未沉淀则提示跑 `/intelli:e2e-verify`。Mode A、Mode B 都适用。版本 1.1.0 → 1.2.0。
+- **`skills/debug/SKILL.md` 重写"附"章节**：把 `aliyun` CLI 升级为 `aliyunlog` CLI（实际可用名）；加 Preflight 烟雾测试；加 OR 多关键词查询模板；新增"附 B：跨服务断言宽松法则"（class 字段是缩写、用 OR、等够 12s、Spec fail 先怀疑选择器）；新增"附 C：与 E2E 验收的衔接"（单点 debug vs 系统 E2E 的判断界限）。版本 1.1.0 → 1.2.0。
+- **`README.md` Skills 列表新增两行**：`intelli:e2e-verify` 和 `intelli:debug`。
+
+---
+
+## [2.19.0] - 2026-04-29
+
+### Added — CustomTicket 集成项目复盘沉淀
+
+- **`knowledge-base/intelli-capabilities.md`**：
+  - ChannelAuth 模式表格新增 `CustomTicket` 平台
+  - 新增 "Webhook URL 安全设计（防 IDOR）" 章节：禁止用纯数字 channelId 当 token，必须 `{xToken}/{channelId}` 格式 + tenant 校验
+  - 新增 "channelAuth metadata 字段约定（botId + xToken）"：`doAuth` 必须显式 setBotId+setXToken 到 metadata，否则 tars 端 `aiSetting=null`
+  - 新增 "buildTicketConfig 向后兼容 fallback"：metadata→column 兜底
+  - 新增 "Tars view 创建时机"：SLG 走 controller、PLG 走 PersonaCreatedEvent；HTTP 工单系统应跳过 emailExclude 过滤
+  - 新增 "Operations HTTP 调用统一走 ThirdPartyApiClient"：复用重试/日志/异常封装
+
+- **`knowledge-base/frontend-integration.md`**：
+  - 新增 "错误处理分层契约"：拦截器已统一弹错误，业务代码再 try/catch + message.error 会弹两次
+  - 新增 "样式管理边界"：CSS Module 优先，inline style 仅限运行时计算
+  - 新增 "重命名的穿透性"：代码/标识/工程/资源/文档 5 维度，漏一层就是债
+  - 新增 "Push 前自检" 命令模板
+
+- **`knowledge-base/sdk-publish-guide.md`**：
+  - 新增 "跨仓变更对照表" + 反模式列表（同 SNAPSHOT 重 deploy / 多仓同时 merge）
+
+### Source
+来自 `feature/ticket-v2-channelauth-arch` 分支复盘——新接入 CUSTOM_TICKET（即"自研工单系统"）平台，过程踩到的 7 类共性问题：IDOR / metadata 字段约定 / view 创建时机 / SDK 版本同步 / 错误处理重复 / inline style 失控 / 重命名不彻底。
+
+---
+
 ## [2.18.0] - 2026-04-21
 
 ### Changed
